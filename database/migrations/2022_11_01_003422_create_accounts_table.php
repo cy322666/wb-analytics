@@ -22,6 +22,12 @@ return new class extends Migration
             $table->integer('user_id');
             $table->dateTime('last_updated_at')->nullable();
             $table->dateTime('expired_at')->nullable();
+
+            $table->string('ip')->nullable();
+            $table->string('user')->nullable();
+            $table->string('pass')->nullable();
+            $table->string('port')->nullable();
+            $table->string('driver')->nullable();
         });
     }
 

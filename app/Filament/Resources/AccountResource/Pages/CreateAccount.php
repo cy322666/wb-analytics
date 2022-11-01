@@ -26,7 +26,10 @@ class CreateAccount extends CreateRecord implements HasForms
     {
         return [
             TextInput::make('token')
-                ->default('API токен')
+                ->placeholder('API токен')
+                ->required(),
+            TextInput::make('name')
+                ->placeholder('Название')
                 ->required(),
             Hidden::make('user_id')
                 ->default(Auth::user()->id)

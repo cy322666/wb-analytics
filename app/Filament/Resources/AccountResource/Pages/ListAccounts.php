@@ -6,13 +6,17 @@ use App\Filament\Resources\AccountResource;
 use App\Models\Account;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Resources\Table;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListAccounts extends ListRecords
 {
     protected static string $resource = AccountResource::class;
+
+    protected static ?string $title = 'Аккаунты';
 
     protected function getTableQuery(): Builder
     {
@@ -22,18 +26,22 @@ class ListAccounts extends ListRecords
     protected function getActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()->label('+Новый'),
         ];
     }
 
-    public function table(\Filament\Resources\Table $table): \Filament\Resources\Table
+    public function table(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('token'),
-                TextColumn::make('created_at')->sortable(),
-                TextColumn::make('last_updated_at')->sortable(),
+                TextColumn::make('name')->label('Название'),
+                TextColumn::make('created_at')->sortable()->label('Создан'),
+                TextColumn::make('last_updated_at')->sortable()->label('Обновлен'),
             ])
-            ->defaultSort('created_at');
+            ->defaultSort('created_at')
+            ->actions([
+                ViewAction::make()->label('Просмотр'),
+                EditAction::make()->label('Изменить'),
+            ]);
     }
 }

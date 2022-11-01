@@ -8,4 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class Supplies extends Model
 {
     use HasFactory;
+
+    protected $table = 'wb_supplies';
 }

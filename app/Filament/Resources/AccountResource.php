@@ -27,27 +27,27 @@ class AccountResource extends Resource
             ]);
     }
 
-    public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                //
-            ])
-            ->filters([
-                //
-            ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-            ]);
-    }
+//    public static function table(Table $table): Table
+//    {
+//        return $table
+//            ->columns([
+//                //
+//            ])
+//            ->filters([
+//                //
+//            ])
+//            ->actions([
+//                Tables\Actions\EditAction::make(),
+//            ])
+//            ->bulkActions([
+//                Tables\Actions\DeleteBulkAction::make(),
+//            ]);
+//    }
 
     public static function getRelations(): array
     {
         return [
-            //
+            AccountResource\RelationManagers\WbExportsRelationManager::class,
         ];
     }
 
