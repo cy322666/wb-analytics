@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\WB\Export;
 use App\Models\WB\Order;
 use App\Models\WB\Stock;
 use App\Models\WB\Supplies;
@@ -11,6 +10,8 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class Account extends Model
 {
@@ -18,18 +19,21 @@ class Account extends Model
 
     protected $table = 'accounts';
 
+    protected $connection = 'pgsql';
+
     protected $fillable = [
+        'name',
         'token',
         'is_active',
         'user_id',
-        'name',
         'last_updated_at',
         'expired_at',
-        'ip',
-        'user',
-        'pass',
-        'port',
-        'driver',
+        'db_port',
+        'db_name',
+        'db_username',
+        'db_password',
+        'db_host',
+        'db_type',
     ];
 
     protected static function boot()
@@ -65,6 +69,10 @@ class Account extends Model
                 'start_at' => Carbon::now(),
                 'account_id' => $item->id,
             ]);
+
+            $result = Artisan::call("wb:install $item->db_name");
+
+            Log::alert(__METHOD__.' : result create db : '.$result);
         });
     }
 

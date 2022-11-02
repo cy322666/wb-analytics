@@ -52,20 +52,23 @@ class ViewAccount extends ViewRecord
 
                             Tabs\Tab::make('База данных')
                                 ->schema([
-                                    TextInput::make('ip')
+                                    TextInput::make('db_host')
                                         ->label('IP')
                                         ->required(),
-                                    TextInput::make('user')
+                                    TextInput::make('db_username')
                                         ->label('Логин')
                                         ->required(),
-                                    TextInput::make('pass')
+                                    TextInput::make('db_password')
                                         ->label('Пароль')
                                         ->required(),
-                                    TextInput::make('port')
+                                    TextInput::make('db_port')
                                         ->label('Порт')
                                         ->required(),
-                                    TextInput::make('driver')
+                                    TextInput::make('db_type')
                                         ->label('Тип')
+                                        ->required(),
+                                    TextInput::make('db_name')
+                                        ->placeholder('База данных')
                                         ->required(),
                                 ]),
 //                            Tabs\Tab::make('Label 3')

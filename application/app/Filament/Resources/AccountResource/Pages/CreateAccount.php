@@ -25,14 +25,31 @@ class CreateAccount extends CreateRecord implements HasForms
     protected function getFormSchema(): array
     {
         return [
+            TextInput::make('name')
+                ->placeholder('Название аккаунта')
+                ->required(),
             TextInput::make('token')
                 ->placeholder('API токен')
                 ->required(),
-            TextInput::make('name')
-                ->placeholder('Название')
+            TextInput::make('db_name')
+                ->placeholder('Название Базы')
                 ->required(),
+            TextInput::make('db_name')
+                ->placeholder('База данных')
+                ->required(),
+
             Hidden::make('user_id')
-                ->default(Auth::user()->id)
+                ->default(Auth::user()->id),
+            Hidden::make('db_host')
+                ->default('postgresql'),
+            Hidden::make('db_username')
+                ->default('root'),
+            Hidden::make('db_password')
+                ->default('pQLkm8NOkS0gOBox'),
+            Hidden::make('db_type')
+                ->default('pgsql'),
+            Hidden::make('db_port')
+                ->default('5432'),
         ];
     }
 }

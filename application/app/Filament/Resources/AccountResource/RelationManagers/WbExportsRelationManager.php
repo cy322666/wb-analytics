@@ -2,15 +2,14 @@
 
 namespace App\Filament\Resources\AccountResource\RelationManagers;
 
-use App\Models\WB\Export;
+use App\Models\Export;
 use Filament\Forms;
 use Filament\Resources\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Resources\Table;
 use Filament\Tables;
-use Illuminate\Contracts\Support\Htmlable;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Actions\BulkAction;
+use Illuminate\Database\Eloquent\Collection;
 
 class WbExportsRelationManager extends RelationManager
 {
@@ -28,6 +27,11 @@ class WbExportsRelationManager extends RelationManager
                     ->required()
                     ->maxLength(255),
             ]);
+    }
+
+    protected function getTablePollingInterval(): ?string
+    {
+        return '3s';
     }
 
     public static function table(Table $table): Table
@@ -55,7 +59,26 @@ class WbExportsRelationManager extends RelationManager
 //                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+//                BulkAction::make('reUpdate')
+//                    ->action(function (Collection $records): void {
+//                        foreach ($records as $record) {
+//                            $record->reUpdate();
+//                        }
+//                    })
+//                    ->deselectRecordsAfterCompletion()
+//                    ->requiresConfirmation()
+////                    ->action(fn (Export $record) => $record->reUpdate())
+//                    ->label('Перезалить'),
+
+                 BulkAction::make('repeat')
+                     ->action(function (Collection $records): void {
+                         foreach ($records as $record) {
+                             $record->reload();
+                         }
+                     })
+                     ->deselectRecordsAfterCompletion()
+                     ->requiresConfirmation()
+                     ->label('Повторить')
             ]);
     }
 }
