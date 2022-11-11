@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\WB\Order;
 use App\Models\WB\Stock;
+use App\Models\WB\Supplier\Income;
 use App\Models\WB\Supplies;
 use App\Models\WB\Warehouse;
 use Carbon\Carbon;
@@ -26,6 +27,7 @@ class Account extends Model
         'token',
         'is_active',
         'user_id',
+        'is_remote',
         'last_updated_at',
         'expired_at',
         'db_port',
@@ -70,7 +72,28 @@ class Account extends Model
                 'account_id' => $item->id,
             ]);
 
-            $result = Artisan::call("wb:install $item->db_name");
+            Export::query()->create([
+                'user_id'  => $item->user_id,
+                'type'     => WB\Supplier\Stock::class,
+                'start_at' => Carbon::now(),
+                'account_id' => $item->id,
+            ]);
+
+            Export::query()->create([
+                'user_id'  => $item->user_id,
+                'type'     => WB\Supplier\Income::class,
+                'start_at' => Carbon::now(),
+                'account_id' => $item->id,
+            ]);
+
+            Export::query()->create([
+                'user_id'  => $item->user_id,
+                'type'     => WB\Supplier\Stock::class,
+                'start_at' => Carbon::now(),
+                'account_id' => $item->id,
+            ]);
+
+            $result = Artisan::call("wb:install $item->id");
 
             Log::alert(__METHOD__.' : result create db : '.$result);
         });

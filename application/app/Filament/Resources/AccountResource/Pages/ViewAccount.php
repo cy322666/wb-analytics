@@ -48,6 +48,12 @@ class ViewAccount extends ViewRecord
                                     TextInput::make('token')
                                         ->label('API токен')
                                         ->required(),
+                                    TextInput::make('token32')
+                                        ->placeholder('API токен 32')
+                                        ->required(),
+                                    TextInput::make('token64')
+                                        ->placeholder('API токен 64')
+                                        ->required(),
                                 ]),
 
                             Tabs\Tab::make('База данных')

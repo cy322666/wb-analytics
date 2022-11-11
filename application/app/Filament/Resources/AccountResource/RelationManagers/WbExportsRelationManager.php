@@ -31,13 +31,14 @@ class WbExportsRelationManager extends RelationManager
 
     protected function getTablePollingInterval(): ?string
     {
-        return '3s';
+        return '10s';
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('id'),
                 Tables\Columns\TextColumn::make('type'),
                 Tables\Columns\TextColumn::make('start_at'),
                 Tables\Columns\TextColumn::make('finish_at'),

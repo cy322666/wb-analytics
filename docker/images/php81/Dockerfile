@@ -33,7 +33,6 @@ RUN docker-php-ext-install exif
 
 RUN docker-php-ext-install -j "$(nproc)" gd
 
-
 RUN docker-php-ext-install intl opcache \
     && pecl install apcu \
     && docker-php-ext-enable apcu \
@@ -49,6 +48,9 @@ RUN apk add --no-cache nodejs npm && \
     mkdir "/home/www-data/.npm-global/" && \
     npm config set prefix "/home/www-data/.npm-global/" && \
     npm install -g chokidar
+
+RUN docker-php-ext-install gd mysqli pdo pdo_mysql -j5 gd mbstring mysqli pdo pdo_mysql shmop
+#RUN docker-php-ext-enable gd mysqli pdo pdo_mysql -j5 gd mbstring mysqli pdo pdo_mysql shmop
 
 ENV SWOOLE_MAX_REQUESTS "100"
 ENV SWOOLE_TASK_WORKERS "1"

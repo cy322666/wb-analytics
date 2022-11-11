@@ -20,11 +20,8 @@ class Incomes
 
         $query = 'dateFrom='.$date.'&key='.$this->api_key;//take=1000&skip=0&key='.
 
-        //for ($i = 0; ; $i++) {
-
         $response = Http::withHeaders($this->getHeaders())->get($this::BASE_URL.self::URL.'?'.$query);
 
         return json_decode($response->body());
-       // }
     }
 }

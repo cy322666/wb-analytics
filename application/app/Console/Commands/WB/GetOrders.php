@@ -27,24 +27,26 @@ class GetOrders extends Command
     {
         $export  = Export::find($this->argument('export'));
         $account = $export->account;
-        $token   = $account->token;
         $options = json_decode($export->options);
 
         $dbManager = (new Manager());
         $dbManager->init($account);
 
-        $wb = WB::init($token);
+        $wb = WB::init(
+            $account->token,
+            $account->token32,
+            $account->token64,
+        );
 
         $request = (new RequestDto());
-        $request->start = '2022-09-30T17:14:52Z';
+        $request->start = '2022-06-30T17:14:52Z';
         $request->end  = '';
-//        $request->take = '';
-//        $request->skip = '';
 
         try {
             $response = $wb->orders()->all($request);
 
             $response = (new ResponseParser)->parse($response);
+dd($response);
 
             foreach ($response->orders as $order) {
 

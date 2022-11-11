@@ -1,34 +1,34 @@
 <?php
 
-namespace App\Services\WB\Models;
+namespace App\Services\WB\Models\Supplie;
 
 use App\Services\WB\Core;
 use App\Services\WB\RequestDto;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Http\Message\ResponseInterface;
 
 class Orders
 {
     const URL = 'orders';
 
-    public const BASE_URL = 'https://suppliers-api.wildberries.ru/api/v2/';
+    public const BASE_URL = 'https://suppliers-stats.wildberries.ru/api/v1/supplier/';
 
     public function __construct(private Core $core) {}
 
     /**
      * @throws GuzzleException
      */
-    public function all(RequestDto $request)
+    public function all(RequestDto $request): ResponseInterface
     {
         return $this->core
             ->http
             ->get(self::BASE_URL.self::URL, [
                 'query' => [
-                    'date_start' => $request->start,
-                    'date_end' => $request->end,
-                    'take' => $request->take,
-                    'skip' => $request->skip,
+                    'key' => $this->core->token64,
+                    'dateFrom' => $request->dateFrom,
+                    'flag' => $request->flag,
                 ],
-                'headers'  => $this->core->headers(),
+                'headers'  => $this->core->headersStats(),
                 ['timeout' => $request->timeout]
             ]);
     }

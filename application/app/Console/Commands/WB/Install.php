@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Services\DB\Manager;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Console\Command\Command as CommandAlias;
@@ -17,7 +18,7 @@ class Install extends Command
      *
      * @var string
      */
-    protected $signature = 'wb:install {name}';
+    protected $signature = 'wb:install {id}';
 
     /**
      * The console command description.
@@ -35,22 +36,20 @@ class Install extends Command
     {
         $migrations = scandir(database_path('migrations/wb/'));
 
-        $dbName = $this->argument('name');
+        $account = Account::query()->find($this->argument('id'));
 
-        $dbManager = (new Manager());
-        $dbManager->init(
-            Account::query()
-                ->where('db_name', $dbName)
-                ->first()
-        );
+        ((new Manager()))->init($account);
 
-        DB::connection('pgsql')->statement("CREATE DATABASE {$dbName};");
+        if (!$account->is_remote) {
 
+            DB::connection('pgsql')->statement("CREATE DATABASE $account->db_name;");
+        }
+//dd(Config::get(''));
         foreach ($migrations as $filename) {
 
             if (strlen($filename) > 5) {
 
-                Artisan::call('migrate --path=database/migrations/wb/'.$filename);
+                Artisan::call('migrate --database=second --path=database/migrations/wb/'.$filename);
             }
         }
 
