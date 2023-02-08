@@ -4,6 +4,7 @@ namespace App\Console\Commands\WB;
 
 use App\Models\Account;
 use App\Services\DB\Manager;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
@@ -31,25 +32,30 @@ class Install extends Command
      * Execute the console command.
      *
      * @return int
+     * @throws Exception
      */
     public function handle()
     {
-        $migrations = scandir(database_path('migrations/wb/'));
+        $migrations = scandir(database_path('migrations/wb-new/'));
 
         $account = Account::query()->find($this->argument('id'));
 
         ((new Manager()))->init($account);
 
-        if (!$account->is_remote) {
+//        if (!$account->is_remote) {
+//
+//            if ($account->is_active === true) {
+//
+//                DB::connection('pgsql')->statement("CREATE DATABASE $account->db_name;");
+//            } else
+//                throw new Exception('Account no active');
+//        }
 
-            DB::connection('pgsql')->statement("CREATE DATABASE $account->db_name;");
-        }
-//dd(Config::get(''));
         foreach ($migrations as $filename) {
 
             if (strlen($filename) > 5) {
 
-                Artisan::call('migrate --database=second --path=database/migrations/wb/'.$filename);
+                Artisan::call('migrate --database=second --path=database/migrations/wb-new/'.$filename);
             }
         }
 
