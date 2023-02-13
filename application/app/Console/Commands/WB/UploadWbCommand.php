@@ -47,11 +47,11 @@ class UploadWbCommand extends Command
                 'wb:stocks',
                 ['--account-id' => $account->id, '--db' => $this->option('db')]
             );
-            WbPricesJob::dispatch($account, $this->option('db'))->onQueue('WbPrices');
-            WbIncomesJob::dispatch($account, $this->option('db'))->onQueue('WbIncomes');
-            WbOrdersJob::dispatch($account, $this->option('db'))->onQueue('WbOrders');
-            WbSalesJob::dispatch($account, $this->option('db'))->onQueue('WbSales');
-            WbSalesReportsJob::dispatch($account, $this->option('db'))->onQueue('WbSalesReports');
+//            WbPricesJob::dispatch($account, $this->option('db'))->onQueue('WbPrices');
+//            WbIncomesJob::dispatch($account, $this->option('db'))->onQueue('WbIncomes');
+//            WbOrdersJob::dispatch($account, $this->option('db'))->onQueue('WbOrders');
+//            WbSalesJob::dispatch($account, $this->option('db'))->onQueue('WbSales');
+//            WbSalesReportsJob::dispatch($account, $this->option('db'))->onQueue('WbSalesReports');
         }
 
         return Command::SUCCESS;

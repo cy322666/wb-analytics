@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Account;
-use App\Models\WbOrder;
+use App\Models\WB\WbOrder;
 use App\Models\WbSale;
 use Carbon\Carbon;
 use Exception;

@@ -3,7 +3,7 @@
 namespace App\Jobs\WB;
 
 use App\Models\Account;
-use App\Models\WbOrder;
+use App\Models\WB\WbOrder;
 use App\Services\DB\Manager;
 use App\Services\WB\Wildberries;
 use Carbon\Carbon;
@@ -25,7 +25,7 @@ class WbOrdersJob implements ShouldQueue
 
     protected string $db;
 
-    private static string $defaultDateFrom = '2022-02-20';
+    private static string $defaultDateFrom = '2022-01-01';
     private static int $countSubtractionMonth = 3;
 
     public function __construct(protected Account $account) {}
