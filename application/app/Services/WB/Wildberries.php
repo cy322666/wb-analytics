@@ -13,10 +13,6 @@ class Wildberries extends WildberriesClient
         'Content-Type' => 'application/json',
     ];
 
-    private const DEFAULT_OPTIONS = [
-        'headers' => self::DEFAULT_HEADER
-    ];
-
     private array $urls = [
         'standard'  => 'https://suppliers-api.wildberries.ru/',
         'statistic' => 'https://statistics-api.wildberries.ru/',
@@ -487,9 +483,11 @@ class Wildberries extends WildberriesClient
     public function getSupplierOrders(DateTime $dateFrom, int $flag = 0, bool $is_UTC = false): ResponseInterface
     {
         $props = [
-            'flag' => $flag,
-            'dateFrom' => $dateFrom->format($is_UTC ? 'Y-m-d\TH:i:s\Z' : 'Y-m-d\TH:i:s'),
-            'Authorization' => $this->keys['statistic'],
+            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['statistic']],
+            'query'   => [
+                'flag' => $flag,
+                'dateFrom' => $dateFrom->format($is_UTC ? 'Y-m-d\TH:i:s\Z' : 'Y-m-d\TH:i:s'),
+            ]
         ];
 
         return (new WildberriesRequest)
