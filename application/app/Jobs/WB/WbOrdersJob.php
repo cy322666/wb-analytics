@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -19,20 +20,37 @@ use Illuminate\Support\Facades\Config;
 //use KFilippovk\Wildberries\Facades\Wildberries;
 use Throwable;
 
-class WbOrdersJob implements ShouldQueue
+class WbOrdersJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected string $db;
 
-    private static string $defaultDateFrom = '2022-01-01';
-    private static int $countSubtractionMonth = 3;
+    //лимит попыток
+    public int $tries = 3;
+
+    //длительность выполнения
+    public int $timeout = 120;
+
+    //ожидание сек до повтора после фейла
+    public int $backoff = 30;
+
+    private static string $defaultDateFrom = '2022-02-13';
+    private static int $countSubtractionMonth = 1;
+
+    public function uniqueId(): string
+    {
+        return 'orders-account-'.$this->account->id;
+    }
 
     public function __construct(protected Account $account) {}
 
+    /**
+     * @throws Exception
+     */
     public function handle()
     {
-        try {
+//        try {
             ((new Manager()))->init($this->account);
 
             $wbApi = (new Wildberries([
@@ -44,7 +62,8 @@ class WbOrdersJob implements ShouldQueue
             dump('account id: ' . $this->account->id);
 
             $dateFrom = WbOrder::query()->exists()
-                ? Carbon::today()->subMonths(static::$countSubtractionMonth)
+//                ? Carbon::today()->subMonths(static::$countSubtractionMonth)
+                ? Carbon::today()->subDays(static::$countSubtractionMonth)
                 : Carbon::parse(static::$defaultDateFrom);
 
             do {
@@ -53,6 +72,8 @@ class WbOrdersJob implements ShouldQueue
                 $ordersResponse = $wbApi->getSupplierOrders($dateFrom);
 
                 if ($ordersResponse->getStatusCode() !== 200) {
+
+                    //TODO перехватывать все эксепшены
 
                     throw new Exception('Response code == '.$ordersResponse->getStatusCode().' : '.$ordersResponse->getReasonPhrase());
                 } else {
@@ -107,9 +128,13 @@ class WbOrdersJob implements ShouldQueue
 
             } while (count($orders) >= 80_000);
 
-        } catch (Throwable $exception) {
-
-            dd($exception->getMessage(). ' ' .$exception->getLine());
-        }
+//        } catch (Throwable $exception) {
+//
+//            dd($exception->getMessage(). ' ' .$exception->getLine());
+//        }
     }
+
+    //TODO command
+    //php artisan queue:clear redis --queue=emails
+    //php artisan queue:flush
 }

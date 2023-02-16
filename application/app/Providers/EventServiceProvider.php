@@ -2,10 +2,14 @@
 
 namespace App\Providers;
 
+use App\Services\Telegram\Telegram;
+use Filament\Notifications\Notification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Illuminate\Queue\Events\QueueBusy;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -27,7 +31,18 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        Event::listen(function (QueueBusy $event) {
+//            Notification::route('mail', 'dev@example.com')
+              //TODO push tg
+
+            Log::error(__METHOD__, [
+                $event->connection,
+                $event->queue,
+                $event->size
+            ]);
+
+            Telegram::send(__METHOD__.' '.$event->connection);
+        });
     }
 
     /**
@@ -35,7 +50,7 @@ class EventServiceProvider extends ServiceProvider
      *
      * @return bool
      */
-    public function shouldDiscoverEvents()
+    public function shouldDiscoverEvents(): bool
     {
         return false;
     }

@@ -32,14 +32,15 @@ class Wildberries extends WildberriesClient
      * Получение информации по номенклатурам, их ценам, скидкам и промокодам. Если не указывать фильтры, вернётся весь товар.
      *
      * @param int $quantity 2 - товар с нулевым остатком, 1 - товар с ненулевым остатком, 0 - товар с любым остатком
-     * @return array
+     * @return ResponseInterface
+     * @throws Exception
      */
-    public function getInfo(int $quantity = 0): array
+    public function getInfo(int $quantity = 0): ResponseInterface
     {
-        return (new WildberriesData($this->getResponse(
-            'public/api/v1/info',
+        return (new WildberriesRequest)->makeRequest(
+            $this->urls['standard'].'public/api/v1/info',
             compact('quantity')
-        )))->data;
+        );
     }
 
     /**
@@ -69,9 +70,16 @@ class Wildberries extends WildberriesClient
      * @param int|null $id Идентификатор сборочного задания, если нужно получить данные по какому-то определенному заказу.
      * @param bool $is_UTC
      * @return ResponseInterface
+     * @throws Exception
      */
-    public function getOrders(int $skip, int $take, DateTime $date_start, DateTime $date_end = null,
-                              int $status = null, int $id = null, bool $is_UTC = false): ResponseInterface
+    public function getOrders(
+        int $skip,
+        int $take,
+        DateTime $date_start,
+        DateTime $date_end = null,
+        int $status = null,
+        int $id = null,
+        bool $is_UTC = false): ResponseInterface
     {
         $date_start = $date_start->format($is_UTC ? 'Y-m-d\TH:i:s\Z' : 'Y-m-d\TH:i:s');
         $date_end = $date_end ?->format($is_UTC ? 'Y-m-d\TH:i:s\Z' : 'Y-m-d\TH:i:s');
@@ -186,14 +194,17 @@ class Wildberries extends WildberriesClient
      *                          Example: name=3D
      * @param int|null $top Количество запрашиваемых значений
      *                      Example: top=50
-     * @return mixed
+     * @throws Exception
      */
-    public function getObjectAll(string $name = null, int $top = null): mixed
+    public function getObjectAll(string $name = null, int $top = null): ResponseInterface
     {
-        return (new WildberriesData($this->getResponse(
-            'content/v1/object/all',
-            array_diff(compact('name', 'top'), [''])
-        )))->data;
+        $props = [
+            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['standard']],
+            'query'   => ['top' => $top]
+        ];
+
+        return (new WildberriesRequest)
+            ->makeRequest($this->urls['standard'].'content/v1/object/all', $props);
     }
 
     /** MBA-6 ~5m
