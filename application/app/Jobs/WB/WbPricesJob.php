@@ -1,80 +1,82 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\WB;
 
 use App\Models\Account;
-use App\Models\WbPrice;
+use App\Models\WB\WbPrice;
+use App\Services\DB\Manager;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Config;
-use KFilippovk\Wildberries\Facades\Wildberries;
 
 class WbPricesJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected Account $account;
     protected string $db;
 
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
-    public function __construct(Account $account, string $db)
+    public int $tries = 1;
+
+    public int $timeout = 30;
+
+    public int $backoff = 10;
+
+    public function uniqueId(): string
     {
-        $this->account = $account;
-        $this->db = $db;
+        return 'prices-account-'.$this->account->id;
     }
 
+    public function __construct(protected Account $account) {}
+
     /**
-     * Execute the job.
-     *
-     * @return void
+     * @throws \Exception
      */
     public function handle()
     {
-        Config::set('database.default', $this->db);
-        $hourStartDay = Config::get('time.hour_start_day');
+        ((new Manager()))->init($this->account);
 
-        // DEBUG
-        dump('account id: ' . $this->account->id);
-
-        $keys = $this->account->getIntegrationKeysMap();
-
+        $wbApi = (new \App\Services\WB\Wildberries([
+            'standard'  => $this->account->token_standard,
+            'statistic' => $this->account->token_statistic,
+        ]));
         /**
-         * @TODO: 
+         * @TODO:
          * Работает только у клиентов, у которых определен токен 'token_api'
          * или он !== 'NULL'.
          * Чтобы работало для всех клиентов, нужно добавить ключ 'token_api'.
          */
-        if (!isset($keys['token_api']) || $keys['token_api'] === 'NULL') {
-            return;
-        }
+//        if (!isset($keys['token_api']) || $keys['token_api'] === 'NULL') {
+//            return;
+//        }
 
-        $today = Carbon::now()->subHours($hourStartDay)->format('Y-m-d');
+        $today = Carbon::now()->subHours(1)->format('Y-m-d');//TODO
 
-        $items = Wildberries::config($keys)->getInfo();
+        $pricesResponse = $wbApi->getInfo(0);
 
-        $pricesForSave = array_map(
-            fn ($item) =>
-            [
-                'account_id' => $this->account->id,
-                'nm_id' => $item->nmId,
-                'price' => $item->price,
-                'discount' => $item->discount,
-                'promo_code' => $item->promoCode,
-                'date' => $today
-            ],
-            $items
+        $prices = json_decode(
+            $pricesResponse->getBody()->getContents(), true
         );
 
-        WbPrice::where([['account_id', $this->account->id], ['date', $today]])->delete();
-        $pricesForSaveChunks = array_chunk($pricesForSave, 1000);
-        array_map(fn ($chunk) => WbPrice::insert($chunk), $pricesForSaveChunks);
+        $wbPrices = array_map(
+            fn ($item) => [
+                'nm_id'      => $item['nmId'],
+                'price'      => $item['price'],
+                'discount'   => $item['discount'],
+                'promo_code' => $item['promoCode'],
+                'date' => $today
+            ],
+            $prices
+        );
+
+//        WbPrice::where([['account_id', $this->account->id], ['date', $today]])->delete();
+
+        array_map(
+            fn ($chunk) =>
+                WbPrice::query()->insert($chunk),
+                array_chunk($wbPrices, 1000)
+        );
     }
 }

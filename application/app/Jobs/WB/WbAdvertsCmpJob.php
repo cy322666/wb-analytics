@@ -3,103 +3,96 @@
 namespace App\Jobs;
 
 use App\Models\Account;
-use App\Models\WbAdvert;
-use App\Models\WbAdvertsCpm;
+use App\Models\WB\WbAdvert;
+use App\Models\WB\WbAdvertsCpm;
+use App\Services\DB\Manager;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Config;
-use KFilippovk\Wildberries\Facades\WildberriesAdvert;
 
 class WbAdvertsCmpJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected Account $account;
     protected string $db;
 
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
-    public function __construct(Account $account, string $db)
+    public int $tries = 1;
+
+    public int $timeout = 30;
+
+    public int $backoff = 10;
+
+    private static array $dictTypes = [
+        '4' => 'реклама в каталоге',
+        '5' => 'реклама в карточке товара',
+        '6' => 'реклама в поиске',
+        '7' => 'реклама в рекомендациях на главной странице',
+    ];
+
+    private static array $associationParamColumnAndType = [
+        'menu_id'    => '4',
+        'set_id'     => '5',
+        'subject_id' => '6',
+    ];
+
+    public function uniqueId(): string
     {
-        $this->account = $account;
-        $this->db = $db;
+        return 'advertcmp-account-'.$this->account->id;
     }
+
+    public function __construct(protected Account $account) {}
 
     /**
      * Execute the job.
      *
      * @return void
+     * @throws \Exception
      */
     public function handle()
     {
-        Config::set('database.default', $this->db);
-        $hourStartDay = Config::get('time.hour_start_day');
+        ((new Manager()))->init($this->account);
 
-        $dictTypes = [
-            '4' => 'реклама в каталоге',
-            '5' => 'реклама в карточке товара',
-            '6' => 'реклама в поиске',
-            '7' => 'реклама в рекомендациях на главной странице',
-        ];
-
-        $associationParamColumnAndType = [
-            'menu_id' => '4',
-            'set_id' => '5',
-            'subject_id' => '6',
-        ];
-
-        // DEBUG
-        dump('account id: ' . $this->account->id);
-
-        $keys = $this->account->getIntegrationKeysMap();
+        $wbApi = (new \App\Services\WB\Wildberries([
+            'standard'  => $this->account->token_standard,
+            'statistic' => $this->account->token_statistic,
+        ]));
 
         /**
-         * @TODO: 
+         * @TODO:
          * Работает только у клиентов, у которых определен токен 'token_api_adv'
          * или он !== 'NULL'.
          * Чтобы работало для всех клиентов, нужно добавить ключ 'token_api_adv'.
          */
-        if (!isset($keys['token_api_adv']) || $keys['token_api_adv'] === 'NULL') {
-            return;
-        }
-
-        $parsedAdverts = WbAdvert::where('account_id', $this->account->id)
-            ->get(array_keys($associationParamColumnAndType))
+        $parsedAdverts = WbAdvert::query()
+            ->get(array_keys(static::$associationParamColumnAndType))
             ->map(
-                fn ($item) =>
-                [
+                fn ($item) => [
                     'menu_id' => $item->menu_id,
-                    'set_id' => $item->set_id,
+                    'set_id'  => $item->set_id,
                     'subject_id' => $item->subject_id,
                 ]
             );
-        $paramsMenuId = $parsedAdverts->pluck('menu_id')->unique()->reject(fn ($item) => $item === null)->values()->toArray();
-        $paramsSetId = $parsedAdverts->pluck('set_id')->unique()->reject(fn ($item) => $item === null)->values()->toArray();
+        $paramsMenuId    = $parsedAdverts->pluck('menu_id')->unique()->reject(fn ($item) => $item === null)->values()->toArray();
+        $paramsSetId     = $parsedAdverts->pluck('set_id')->unique()->reject(fn ($item) => $item === null)->values()->toArray();
         $paramsSubjectId = $parsedAdverts->pluck('subject_id')->unique()->reject(fn ($item) => $item === null)->values()->toArray();
 
-        $today = Carbon::now()->subHours($hourStartDay)->format('Y-m-d');
+        $today = Carbon::now()->subHours(1)->format('Y-m-d');//TODO
 
         $advertsCpmForSave = [];
         foreach ($paramsMenuId as $param) {
-            $responseData = WildberriesAdvert::config($keys)->getCpm(type: $associationParamColumnAndType['menu_id'], param: $param);
+            $responseData = $wbApi->getCpm(type: static::$associationParamColumnAndType['menu_id'], param: $param);
             $advertsCpmForSave = array_merge(
                 array_map(
-                    fn ($cpm) =>
-                    [
-                        'account_id' => $this->account->id,
+                    fn ($cpm) => [
                         'date' => $today,
-                        'type' => $associationParamColumnAndType['menu_id'],
-                        'type_name' => $dictTypes[$associationParamColumnAndType['menu_id']],
+                        'type' => static::$associationParamColumnAndType['menu_id'],
+                        'type_name' =>  static::$dictTypes[ static::$associationParamColumnAndType['menu_id']],
                         'param' => $param,
-                        'cmp' => $cpm->Cpm ?? null,
-                        'count' => $cpm->Count ?? null,
+                        'cmp'   => $cpm['Cpm'] ?? null,
+                        'count' => $cpm['Count'] ?? null,
                     ],
                     $responseData
                 ),
@@ -107,18 +100,16 @@ class WbAdvertsCmpJob implements ShouldQueue
             );
         }
         foreach ($paramsSetId as $param) {
-            $responseData = WildberriesAdvert::config($keys)->getCpm(type: $associationParamColumnAndType['set_id'], param: $param);
+            $responseData = $wbApi->getCpm(type: static::$associationParamColumnAndType['set_id'], param: $param);
             $advertsCpmForSave = array_merge(
                 array_map(
-                    fn ($cpm) =>
-                    [
-                        'account_id' => $this->account->id,
+                    fn ($cpm) => [
                         'date' => $today,
-                        'type' => $associationParamColumnAndType['set_id'],
-                        'type_name' => $dictTypes[$associationParamColumnAndType['set_id']],
+                        'type' => static::$associationParamColumnAndType['set_id'],
+                        'type_name' => static::$dictTypes[static::$associationParamColumnAndType['set_id']],
                         'param' => $param,
-                        'cmp' => $cpm->Cpm ?? null,
-                        'count' => $cpm->Count ?? null,
+                        'cmp'   => $cpm['Cpm'] ?? null,
+                        'count' => $cpm['Count'] ?? null,
                     ],
                     $responseData
                 ),
@@ -126,18 +117,16 @@ class WbAdvertsCmpJob implements ShouldQueue
             );
         }
         foreach ($paramsSubjectId as $param) {
-            $responseData = WildberriesAdvert::config($keys)->getCpm(type: $associationParamColumnAndType['subject_id'], param: $param);
+            $responseData = $wbApi->getCpm(type: static::$associationParamColumnAndType['subject_id'], param: $param);
             $advertsCpmForSave = array_merge(
                 array_map(
-                    fn ($cpm) =>
-                    [
-                        'account_id' => $this->account->id,
+                    fn ($cpm) => [
                         'date' => $today,
-                        'type' => $associationParamColumnAndType['subject_id'],
-                        'type_name' => $dictTypes[$associationParamColumnAndType['subject_id']],
+                        'type' => static::$associationParamColumnAndType['subject_id'],
+                        'type_name' => static::$dictTypes[static::$associationParamColumnAndType['subject_id']],
                         'param' => $param,
-                        'cmp' => $cpm->Cpm ?? null,
-                        'count' => $cpm->Count ?? null,
+                        'cmp'   => $cpm['Cpm'] ?? null,
+                        'count' => $cpm['Count'] ?? null,
                     ],
                     $responseData
                 ),
@@ -145,8 +134,12 @@ class WbAdvertsCmpJob implements ShouldQueue
             );
         }
 
-        WbAdvertsCpm::where([['account_id', $this->account->id], ['date', $today]])->delete();
-        $advertsCpmForSaveChunks = array_chunk($advertsCpmForSave, 1000);
-        array_map(fn ($chunk) => WbAdvertsCpm::insert($chunk), $advertsCpmForSaveChunks);
+//        WbAdvertsCpm::where([['account_id', $this->account->id], ['date', $today]])->delete();
+
+        array_map(
+            fn ($chunk) =>
+            WbAdvertsCpm::query()->insert($chunk),
+            array_chunk($advertsCpmForSave, 1000)
+        );
     }
 }
