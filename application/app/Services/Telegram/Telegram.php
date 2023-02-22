@@ -12,6 +12,10 @@ class Telegram
      */
     public static function send(string $msg)
     {
+        if (strlen($msg) >= 4095) {
+
+            $msg = substr($msg, 0, 4094);
+        }
         (new Client())->get('https://api.telegram.org/bot'. env('TG_DEBBUG_TOKEN') .'/sendMessage', [
             'query' => [
                 "chat_id" 	 => env('TG_DEBBUG_CHAT_ID'),
