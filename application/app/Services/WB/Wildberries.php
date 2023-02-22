@@ -16,11 +16,13 @@ class Wildberries extends WildberriesClient
     private array $urls = [
         'standard'  => 'https://suppliers-api.wildberries.ru/',
         'statistic' => 'https://statistics-api.wildberries.ru/',
+        'advert'    => 'https://advert-api.wb.ru/',
     ];
 
     private array $keys = [
           'standard'  => null,
           'statistic' => null,
+          'advert'    => null,
     ];
 
     public function __construct(array $keys)
@@ -37,10 +39,15 @@ class Wildberries extends WildberriesClient
      */
     public function getInfo(int $quantity = 0): ResponseInterface
     {
-        return (new WildberriesRequest)->makeRequest(
-            $this->urls['standard'].'public/api/v1/info',
-            compact('quantity')
-        );
+        $props = [
+            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['standard']],
+            'query'   => [
+                'quantity' => $quantity,
+            ]
+        ];
+
+        return (new WildberriesRequest)
+            ->makeRequest($this->urls['standard'].'public/api/v1/info', $props);
     }
 
     /**
@@ -132,17 +139,20 @@ class Wildberries extends WildberriesClient
      *                             - 2019-06-20T00:00:00.12345
      *                             - 2017-03-25T00:00:00
      * @param bool $is_UTC
-     * @return array
+     * @return ResponseInterface
+     * @throws Exception
      */
-    public function getSupplierIncomes(DateTime $dateFrom, bool $is_UTC = false): array
+    public function getSupplierIncomes(DateTime $dateFrom, bool $is_UTC = false): ResponseInterface
     {
-        return (new WildberriesData($this->getResponse(
-            'api/v1/supplier/incomes',
-            [
-                'dateFrom' => $dateFrom->format($is_UTC ? 'Y-m-d\TH:i:s\Z' : 'Y-m-d\TH:i:s'),
-            ],
-            true
-        )))->data;
+        $props = [
+            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['statistic']],
+            'query'   => [
+                'dateFrom' => $dateFrom->format($is_UTC ? 'Y-m-d\TH:i:s\Z' : 'Y-m-d\TH:i:s')
+            ]
+        ];
+
+        return (new WildberriesRequest)
+            ->makeRequest($this->urls['statistic'].'api/v1/supplier/incomes', $props);
     }
 
     /**
@@ -174,17 +184,29 @@ class Wildberries extends WildberriesClient
      *                 При этом количество возвращенных строк данных будет равно количеству всех заказов или продаж,
      *                 сделанных в указанную дату, переданную в параметре dateFrom.
      * @param bool $is_UTC
-     * @return array
+     * @return ResponseInterface
+     * @throws Exception
      */
-    public function getSupplierSales(DateTime $dateFrom, int $flag = 0, bool $is_UTC = false): array
+    public function getSupplierSales(DateTime $dateFrom, int $flag = 0, bool $is_UTC = false): ResponseInterface
     {
-        $params = compact('flag');
-        $params['dateFrom'] = $dateFrom->format($is_UTC ? 'Y-m-d\TH:i:s\Z' : 'Y-m-d\TH:i:s');
-        return (new WildberriesData(
-            $this->getResponse('api/v1/supplier/sales',
-                $params,
-                true
-            )))->data;
+        $props = [
+            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['statistic']],
+            'query'   => [
+                'flag' => $flag,
+                'dateFrom' => $dateFrom->format($is_UTC ? 'Y-m-d\TH:i:s\Z' : 'Y-m-d\TH:i:s')
+            ]
+        ];
+
+        return (new WildberriesRequest)
+            ->makeRequest($this->urls['statistic'].'api/v1/supplier/sales', $props);
+
+//        $params = compact('flag');
+//        $params['dateFrom'] = $dateFrom->format($is_UTC ? 'Y-m-d\TH:i:s\Z' : 'Y-m-d\TH:i:s');
+//        return (new WildberriesData(
+//            $this->getResponse('api/v1/supplier/sales',
+//                $params,
+//                true
+//            )))->data;
     }
 
     /** MBA-8 ~5m
@@ -205,6 +227,91 @@ class Wildberries extends WildberriesClient
 
         return (new WildberriesRequest)
             ->makeRequest($this->urls['standard'].'content/v1/object/all', $props);
+    }
+
+    public function getCountAdv(): mixed
+    {
+        //TODO
+//        return (new WildberriesRequest)->makeRequest($this->getResponse('adv/v0/count'));
+    }
+
+    /**
+     * Список РК
+     * Получение списка РК поставщика
+     *
+     * @param int|null $status
+     * @param int|null $type
+     * @param int|null $limit
+     * @param int|null $offset
+     * @param string|null $order
+     * @param string|null $direction
+     * @return \ResponseInterface
+     * @throws Exception
+     */
+    public function getAdverts(
+        int $status = null,
+        int $type = null,
+        int $limit = null,
+        int $offset = null,
+        string $order = null,
+        string $direction = null,
+    ): ResponseInterface {
+        $props = [
+            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['standard']],
+            'query'   => [
+                'status' => $status,
+                'type'   => $type,
+                'limit'  => $limit,
+                'offset' => $offset,
+                'order'  => $order,
+                'direction' => $direction,
+            ],
+        ];
+
+        return (new WildberriesRequest)
+            ->makeRequest($this->urls['advert'].'adv/v0/adverts', $props);
+    }
+
+    /**
+     * Информация о РК
+     * Получение информации об одной РК
+     *
+     * @param int id
+     * @return ResponseInterface
+     * @throws Exception
+     */
+    public function getAdvert(int $id): ResponseInterface
+    {
+        $props = [
+            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['standard']],
+            'query'   => ['id' => $id],
+        ];
+
+        return (new WildberriesRequest)
+            ->makeRequest($this->urls['advert'].'adv/v0/advert', $props);
+    }
+
+    /**
+     * Список ставок
+     * Получение списка РК поставщика
+     *
+     * @param int type
+     * @param int param
+     * @return array
+     * @throws Exception
+     */
+    public function getCpm(int $type, int $param): mixed
+    {
+        $props = [
+            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['standard']],
+            'query'   => [
+                'type'   => $type,
+                'params' => $param,
+            ],
+        ];
+
+        return (new WildberriesRequest)
+            ->makeRequest($this->urls['advert'].'adv/v0/cpm', $props);
     }
 
     /** MBA-6 ~5m
