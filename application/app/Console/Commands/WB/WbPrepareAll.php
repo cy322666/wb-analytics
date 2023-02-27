@@ -55,15 +55,15 @@ class WbPrepareAll extends Command
         if ($response->getStatusCode() == 200) {
 
             Bus::chain([
-//                new WbOrdersJob($account),
-//                new WbIncomesJob($account),
-//                new WbPricesJob($account),
-//                new WbSalesJob($account),//TODO 429 -> token
-//                new WbAdvertsJob($account),
-//                new WbAdvertsCmpJob($account),
-//                    new WbStocksJob($account),
-//                new WbSupplierStocksJob($account),//TODO 429
-            new WbSalesReportsJob($account),
+                new WbOrdersJob($account),
+                new WbIncomesJob($account),
+                new WbPricesJob($account),
+                new WbSalesJob($account),//TODO 429 -> token
+                new WbAdvertsJob($account),
+                new WbAdvertsCmpJob($account),
+                new WbStocksJob($account),
+                new WbSupplierStocksJob($account),//TODO 429
+                new WbSalesReportsJob($account),
 //                function () {
 //                    Podcast::update();
 //                },
