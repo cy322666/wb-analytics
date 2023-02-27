@@ -19,8 +19,6 @@ class WbOrdersJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected string $db;
-
     //лимит попыток
     public int $tries = 1;
 
@@ -102,11 +100,11 @@ class WbOrdersJob implements ShouldQueue, ShouldBeUnique
 
             //TODO посмотреть что под капотом происходит
             array_map(
-                fn ($wbOrdersChunck) =>
-                WbOrder::query()->upsert($wbOrdersChunck, [
-                    'date', 'last_change_date', 'barcode', 'odid', 'g_number', 'is_cancel'
-                ]),
-                array_chunk($wbOrders, 1000)
+                fn ($wbOrdersChunk) =>
+                    WbOrder::query()->upsert($wbOrdersChunk, [
+                        'date', 'last_change_date', 'barcode', 'odid', 'g_number', 'is_cancel'
+                    ]),
+                    array_chunk($wbOrders, 1000)
             );
         } while (count($orders) >= 100_000);
     }

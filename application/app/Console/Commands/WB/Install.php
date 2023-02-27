@@ -34,7 +34,7 @@ class Install extends Command
      * @return int
      * @throws Exception
      */
-    public function handle()
+    public function handle(): int
     {
         $migrations = scandir(database_path('migrations/wb-new/'));
 
@@ -42,14 +42,14 @@ class Install extends Command
 
         ((new Manager()))->init($account);
 
-//        if (!$account->is_remote) {
-//
-//            if ($account->is_active === true) {
-//
-//                DB::connection('pgsql')->statement("CREATE DATABASE $account->db_name;");
-//            } else
-//                throw new Exception('Account no active');
-//        }
+        if (!$account->is_remote) {
+
+            if ($account->is_active === true) {
+
+                DB::connection('pgsql')->statement("CREATE DATABASE $account->db_name;");
+            } else
+                throw new Exception('Account no active');
+        }
 
         foreach ($migrations as $filename) {
 

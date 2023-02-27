@@ -52,12 +52,8 @@ class WbAdvertsJob implements ShouldQueue
         ((new Manager()))->init($this->account);
 
         $wbApi = (new \App\Services\WB\Wildberries([
-            'standard'  => $this->account->token_standard,
-            'statistic' => $this->account->token_statistic,
+            'advert'  => $this->account->token_adv,
         ]));
-
-        // DEBUG
-        dump('account id: ' . $this->account->id);
 
         /**
          * @TODO:
@@ -73,7 +69,12 @@ class WbAdvertsJob implements ShouldQueue
         );
 
         foreach ($adverts as $advert) {
-            $adverts[] = $wbApi->getAdvert(id: $advert['id']);
+
+            $detailAdverts[] = json_decode(
+                $wbApi->getAdvert(id: $advert['advertId'])
+                    ->getBody()
+                    ->getContents(), true
+            );
         }
 
         $advertsForSaving = collect(array_map(
@@ -97,10 +98,10 @@ class WbAdvertsJob implements ShouldQueue
                     'subject_name'=> $param['subjectName'] ?? null,
                     'set_id'      => $param['setId'] ?? null,
                 ],
-                $advert->params,
-                array_keys($advert->params)
+                $advert['params'],
+                array_keys($advert['params'])
             ),
-            $adverts
+            $detailAdverts
         ))
             ->collapse()
             ->toArray();

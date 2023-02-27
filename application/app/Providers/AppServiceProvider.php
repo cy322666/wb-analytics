@@ -31,35 +31,35 @@ class AppServiceProvider extends ServiceProvider
     {
         Queue::failing(function (JobFailed $event) {
 
-            Log::error(__METHOD__, [
+            Log::error('appprovider_failing', [
                 $event->connectionName,
                 $event->job->getName(),
                 $event->exception->getMessage(),
             ]);
 
-            Telegram::send(   $event->job->getName().' : '.$event->exception->getMessage());
+//            Telegram::send(   $event->job->getName().' : '.$event->exception->getMessage());
         });
 
         Queue::before(function (JobProcessing $event) {
 
-            Log::info(__METHOD__, [
+            Log::info('appprovider_before', [
                  $event->connectionName,
                  $event->job,
                  $event->job->payload(),
             ]);
 
-            Telegram::send('Старт задания '.$event->job->getQueue().'...');
+//            Telegram::send('Старт задания '.$event->job->getQueue().'...');
         });
 
         Queue::after(function (JobProcessed $event) {
 
-            Log::info(__METHOD__, [
+            Log::info('appprovider_after', [
                 $event->connectionName,
                 $event->job,
                 $event->job->payload(),
             ]);
 
-            Telegram::send('Конец задания...');
+//            Telegram::send('Конец задания...');
         });
     }
 }

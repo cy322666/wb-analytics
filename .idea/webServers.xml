@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="adcd0ebb-5443-482a-a65c-cf81d2aaf70e" name="analyti">
+        <fileTransfer accessType="SFTP" host="5.63.159.148" port="22" sshConfigId="abc0a4fb-b4b3-4c8d-997f-e29dd9087430" sshConfig="root@5.63.159.148:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

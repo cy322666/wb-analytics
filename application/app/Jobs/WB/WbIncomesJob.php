@@ -18,8 +18,6 @@ class WbIncomesJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected string $db;
-
     public int $tries = 1;
 
     public int $timeout = 30;

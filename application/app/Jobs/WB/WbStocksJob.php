@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\WB;
 
 use App\Models\Account;
-use App\Models\WbStock;
+use App\Models\WB\WbStock;
+use App\Services\DB\Manager;
+use App\Services\WB\Wildberries;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -11,105 +13,97 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Config;
-use KFilippovk\Wildberries\Exceptions\WildberriesException;
-use KFilippovk\Wildberries\Facades\Wildberries;
-use Throwable;
 
 class WbStocksJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected Account $account;
-    protected string $db;
+    //лимит попыток
+    public int $tries = 1;
 
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
-    public function __construct(Account $account, string $db)
+    //длительность выполнения
+    public int $timeout = 30;
+
+    //ожидание сек до повтора после фейла
+    public int $backoff = 10;
+
+    private static string $defaultDateFrom = '2022-02-13';
+    private static int $countDaysLoading = 5;
+
+    public function uniqueId(): string
     {
-        $this->account = $account;
-        $this->db = $db;
+        return 'stocks-account-'.$this->account->id;
     }
+
+    public function __construct(protected Account $account) {}
 
     /**
      * Execute the job.
      *
      * @return void
+     * @throws Exception
      */
     public function handle()
     {
-        Config::set('database.default', $this->db);
-        $hourStartDay = Config::get('time.hour_start_day');
+        ((new Manager()))->init($this->account);
 
-        $maxRetryRequests = 30;
+        $wbApi = (new Wildberries([
+            'standard'  => $this->account->token_standard,
+            'statistic' => $this->account->token_statistic,
+        ]));
 
-        $countSleep = 2;
-        $currentRetryRequests = 0;
+        $dateFrom = Carbon::parse('2022-01-01');//TODO static
 
-        // DEBUG
-        dump('account id: ' . $this->account->id);
+        $stocksResponse = $wbApi->getSupplierStocks($dateFrom);
 
-        $dateFrom = Carbon::parse('2022-01-01');
+        $today = Carbon::now()->subHours(1)->format('Y-m-d');//TODO
 
-        $keys = $this->account->getIntegrationKeysMap();
+        if ($stocksResponse->getStatusCode() !== 200) {
 
-        $stocks = null;
-        while ($currentRetryRequests < $maxRetryRequests) {
-            try {
-                $currentRetryRequests++;
-                $stocks = Wildberries::config($keys)->getSupplierStocks($dateFrom);
-                break;
-            } catch (Throwable $throwable) {
-                if ($throwable instanceof WildberriesException) {
-                    dump('WB Exception: Message: '
-                        . substr($throwable->getMessage(), 0, 255) . "...\n"
-                        . "Sleeping on {$countSleep} seconds ...");
-                    sleep($countSleep);
-                }
-            }
+            //TODO перехватывать все эксепшены
+
+            throw new Exception('Response code == '.$stocksResponse->getStatusCode().' : '.$ordersResponse->getReasonPhrase());
+        } else {
+
+            $stocks = json_decode(
+                $stocksResponse->getBody()->getContents(), true
+            );
         }
-
-        if ($currentRetryRequests === $maxRetryRequests) {
-            throw new Exception("Error: The limit of retry {$maxRetryRequests} has been reached. Stopping send request.");
-        }
-
-        $today = Carbon::now()->subHours($hourStartDay)->format('Y-m-d');
 
         $wbStocks = array_map(
-            fn ($stock) =>
-            [
-                'account_id' => $this->account->id,
-                'last_change_date' => $stock->lastChangeDate,
-                'supplier_article' => $stock->supplierArticle,
-                'tech_size' => $stock->techSize,
-                'barcode' => $stock->barcode,
-                'quantity' => $stock->quantity,
-                'is_supply' => $stock->isSupply,
-                'is_realization' => $stock->isRealization,
-                'quantity_full' => $stock->quantityFull ?? null,
-                'quantity_not_in_orders' => $stock->quantityNotInOrders ?? null,
-                'warehouse' => $stock->warehouse ?? null,
-                'warehouse_name' => $stock->warehouseName,
-                'in_way_to_client' => $stock->inWayToClient ?? null,
-                'in_way_from_client' => $stock->inWayFromClient ?? null,
-                'nm_id' => $stock->nmId,
-                'subject' => $stock->subject,
-                'category' => $stock->category,
-                'days_on_site' => $stock->daysOnSite,
-                'brand' => $stock->brand,
-                'sc_code' => $stock->SCCode,
-                'price' => $stock->Price,
-                'discount' => $stock->Discount,
-                'date' => $today
+            fn ($stock) => [
+                'last_change_date' => $stock['lastChangeDate'],
+                'supplier_article' => $stock['supplierArticle'],
+                'tech_size' => $stock['techSize'],
+                'barcode'   => $stock['barcode'],
+                'quantity'  => $stock['quantity'],
+                'is_supply' => $stock['isSupply'],
+                'is_realization'    => $stock['isRealization'],
+                'quantity_full'     => $stock['quantityFull'] ?? null,
+                'quantity_not_in_orders' => $stock['quantityNotInOrders'] ?? null,
+                'warehouse'         => $stock['warehouse'] ?? null,
+                'warehouse_name'    => $stock['warehouseName'],
+                'in_way_to_client'  => $stock['inWayToClient'] ?? null,
+                'in_way_from_client'=> $stock['inWayFromClient'] ?? null,
+                'nm_id'     => $stock['nmId'],
+                'subject'   => $stock['subject'],
+                'category'  => $stock['category'],
+                'days_on_site' => $stock['daysOnSite'],
+                'brand'     => $stock['brand'],
+                'sc_code'   => $stock['SCCode'],
+                'price'     => $stock['Price'],
+                'discount'  => $stock['Discount'],
+                'date'      => $today
             ],
             $stocks
         );
 
-        WbStock::where([['account_id', $this->account->id], ['date', $today], ['is_supplier_stock', false]])->delete();
-        $wbStocksChunks = array_chunk($wbStocks, 1000);
-        array_map(fn ($chunk) => WbStock::insert($chunk), $wbStocksChunks);
+//        WbStock::where([['account_id', $this->account->id], ['date', $today], ['is_supplier_stock', false]])->delete();
+
+        array_map(
+            fn ($chunk) =>
+                WbStock::query()->insert($chunk),
+                array_chunk($wbStocks, 1000)
+        );
     }
 }

@@ -35,7 +35,7 @@ class EventServiceProvider extends ServiceProvider
 //            Notification::route('mail', 'dev@example.com')
               //TODO push tg
 
-            Log::error(__METHOD__, [
+            Log::error('eventservice_error', [
                 $event->connection,
                 $event->queue,
                 $event->size

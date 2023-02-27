@@ -56,15 +56,22 @@ class Wildberries extends WildberriesClient
      * @param int $skip Задает сколько записей пропустить (для пагинации)
      * @param int $take Задает сколько записей выдать (для пагинации)
      * @param string|null $search Выполняет поиск по всем полям таблицы
-     * @return mixed
+     * @throws Exception
      */
-//    public function getStocks(int $skip, int $take, string $search = null): mixed
-//    {
-//        return (new WildberriesData(WildberriesRequest::makeRequest(
-//            'api/v2/stocks',
-//            array_diff(compact('skip', 'take', 'search'), [''])
-//        )))->data;
-//    }
+    public function getStocks(int $skip, int $take, string $search = null): ResponseInterface
+    {
+        $props = [
+            'headers'  => self::DEFAULT_HEADER + ['Authorization' => $this->keys['standard']],
+            'query'    => [
+                'skip' => $skip,
+                'take' => $take,
+                'search' => $search,
+            ]
+        ];
+
+        return (new WildberriesRequest)
+            ->makeRequest($this->urls['standard'].'api/v2/stocks', $props);
+    }
 
     /**
      * Возвращает список сборочных заданий поставщика.
@@ -245,7 +252,6 @@ class Wildberries extends WildberriesClient
      * @param int|null $offset
      * @param string|null $order
      * @param string|null $direction
-     * @return \ResponseInterface
      * @throws Exception
      */
     public function getAdverts(
@@ -256,8 +262,9 @@ class Wildberries extends WildberriesClient
         string $order = null,
         string $direction = null,
     ): ResponseInterface {
+
         $props = [
-            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['standard']],
+            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['advert']],
             'query'   => [
                 'status' => $status,
                 'type'   => $type,
@@ -283,7 +290,7 @@ class Wildberries extends WildberriesClient
     public function getAdvert(int $id): ResponseInterface
     {
         $props = [
-            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['standard']],
+            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['advert']],
             'query'   => ['id' => $id],
         ];
 
@@ -297,16 +304,15 @@ class Wildberries extends WildberriesClient
      *
      * @param int type
      * @param int param
-     * @return array
      * @throws Exception
      */
-    public function getCpm(int $type, int $param): mixed
+    public function getCpm(int $type, int $param): ResponseInterface
     {
         $props = [
-            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['standard']],
+            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['advert']],
             'query'   => [
-                'type'   => $type,
-                'params' => $param,
+                'type'  => $type,
+                'param' => $param,
             ],
         ];
 
@@ -555,17 +561,20 @@ class Wildberries extends WildberriesClient
      *                             - 2019-06-20T00:00:00.12345
      *                             - 2017-03-25T00:00:00
      * @param bool $is_UTC
-     * @return array
+     * @return ResponseInterface
+     * @throws Exception
      */
-    public function getSupplierStocks(DateTime $dateFrom, bool $is_UTC = false): array
+    public function getSupplierStocks(DateTime $dateFrom, bool $is_UTC = false): ResponseInterface
     {
-        return (new WildberriesData($this->getResponse(
-            'api/v1/supplier/stocks',
-            [
+        $props = [
+            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['statistic']],
+            'query'   => [
                 'dateFrom' => $dateFrom->format($is_UTC ? 'Y-m-d\TH:i:s\Z' : 'Y-m-d\TH:i:s'),
-            ],
-            true
-        )))->data;
+            ]
+        ];
+
+        return (new WildberriesRequest)
+            ->makeRequest($this->urls['statistic'].'api/v1/supplier/stocks', $props);
     }
 
     /** MBA-23 ~5m
@@ -638,18 +647,29 @@ class Wildberries extends WildberriesClient
      *                   Таким образом для загрузки одного отчета может понадобиться вызывать API до тех пор, пока
      *                   количество возвращаемых строк не станет равным нулю.
      * @param bool $is_UTC
-     * @return array|null
+     * @return ResponseInterface
+     * @throws Exception
      */
-    public function getSupplierReportDetailByPeriod(DateTime $dateFrom, DateTime $dateTo, int $limit = 0, int $rrdid = 0, bool $is_UTC = false): ?array
-    {
-        $props = compact('limit', 'rrdid');
-        $props['dateFrom'] = $dateFrom->format($is_UTC ? 'Y-m-d\TH:i:s\Z' : 'Y-m-d\TH:i:s');
-        $props['dateTo'] = $dateTo->format($is_UTC ? 'Y-m-d\TH:i:s\Z' : 'Y-m-d\TH:i:s');
-        return (new WildberriesData($this->getResponse(
-            'api/v1/supplier/reportDetailByPeriod',
-            $props,
-            true
-        )))->data;
+    public function getSupplierReportDetailByPeriod(
+        DateTime $dateFrom,
+        DateTime $dateTo,
+        int $limit = 0,
+        int $rrdid = 0,
+        bool $is_UTC = false
+    ): ResponseInterface {
+
+        $props = [
+            'headers' => self::DEFAULT_HEADER + ['Authorization' => $this->keys['statistic']],
+            'query'   => [
+                'dateFrom' => $dateFrom->format($is_UTC ? 'Y-m-d\TH:i:s\Z' : 'Y-m-d\TH:i:s'),
+                'dateTo'   => $dateTo->format($is_UTC ? 'Y-m-d\TH:i:s\Z' : 'Y-m-d\TH:i:s'),
+                'limit' => $limit,
+                'rrdid' => $rrdid,
+            ]
+        ];
+
+        return (new WildberriesRequest)
+            ->makeRequest($this->urls['statistic'].'api/v1/supplier/reportDetailByPeriod', $props);
     }
 
     /** MBA-26 ~5m

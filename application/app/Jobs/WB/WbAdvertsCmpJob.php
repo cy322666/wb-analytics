@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\WB;
 
 use App\Models\Account;
 use App\Models\WB\WbAdvert;
 use App\Models\WB\WbAdvertsCpm;
 use App\Services\DB\Manager;
+use App\Services\WB\Wildberries;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -21,7 +22,7 @@ class WbAdvertsCmpJob implements ShouldQueue
 
     public int $tries = 1;
 
-    public int $timeout = 30;
+    public int $timeout = 120;
 
     public int $backoff = 10;
 
@@ -55,9 +56,8 @@ class WbAdvertsCmpJob implements ShouldQueue
     {
         ((new Manager()))->init($this->account);
 
-        $wbApi = (new \App\Services\WB\Wildberries([
-            'standard'  => $this->account->token_standard,
-            'statistic' => $this->account->token_statistic,
+        $wbApi = (new Wildberries([
+            'advert'  => $this->account->token_adv,
         ]));
 
         /**
@@ -75,71 +75,107 @@ class WbAdvertsCmpJob implements ShouldQueue
                     'subject_id' => $item->subject_id,
                 ]
             );
-        $paramsMenuId    = $parsedAdverts->pluck('menu_id')->unique()->reject(fn ($item) => $item === null)->values()->toArray();
-        $paramsSetId     = $parsedAdverts->pluck('set_id')->unique()->reject(fn ($item) => $item === null)->values()->toArray();
-        $paramsSubjectId = $parsedAdverts->pluck('subject_id')->unique()->reject(fn ($item) => $item === null)->values()->toArray();
+
+        $paramsMenuId = $parsedAdverts->pluck('menu_id')
+            ->unique()
+            ->reject(fn ($item) => $item === null)
+                ->values()
+                ->toArray();
+
+        $paramsSetId = $parsedAdverts->pluck('set_id')
+            ->unique()
+            ->reject(fn ($item) => $item === null)
+                ->values()
+                ->toArray();
+
+        $paramsSubjectId = $parsedAdverts->pluck('subject_id')
+            ->unique()->reject(fn ($item) => $item === null)
+                ->values()
+                ->toArray();
 
         $today = Carbon::now()->subHours(1)->format('Y-m-d');//TODO
 
-        $advertsCpmForSave = [];
         foreach ($paramsMenuId as $param) {
-            $responseData = $wbApi->getCpm(type: static::$associationParamColumnAndType['menu_id'], param: $param);
-            $advertsCpmForSave = array_merge(
-                array_map(
-                    fn ($cpm) => [
-                        'date' => $today,
-                        'type' => static::$associationParamColumnAndType['menu_id'],
-                        'type_name' =>  static::$dictTypes[ static::$associationParamColumnAndType['menu_id']],
-                        'param' => $param,
-                        'cmp'   => $cpm['Cpm'] ?? null,
-                        'count' => $cpm['Count'] ?? null,
-                    ],
-                    $responseData
-                ),
-                $advertsCpmForSave
-            );
-        }
-        foreach ($paramsSetId as $param) {
-            $responseData = $wbApi->getCpm(type: static::$associationParamColumnAndType['set_id'], param: $param);
-            $advertsCpmForSave = array_merge(
-                array_map(
-                    fn ($cpm) => [
-                        'date' => $today,
-                        'type' => static::$associationParamColumnAndType['set_id'],
-                        'type_name' => static::$dictTypes[static::$associationParamColumnAndType['set_id']],
-                        'param' => $param,
-                        'cmp'   => $cpm['Cpm'] ?? null,
-                        'count' => $cpm['Count'] ?? null,
-                    ],
-                    $responseData
-                ),
-                $advertsCpmForSave
-            );
-        }
-        foreach ($paramsSubjectId as $param) {
-            $responseData = $wbApi->getCpm(type: static::$associationParamColumnAndType['subject_id'], param: $param);
-            $advertsCpmForSave = array_merge(
-                array_map(
-                    fn ($cpm) => [
-                        'date' => $today,
-                        'type' => static::$associationParamColumnAndType['subject_id'],
-                        'type_name' => static::$dictTypes[static::$associationParamColumnAndType['subject_id']],
-                        'param' => $param,
-                        'cmp'   => $cpm['Cpm'] ?? null,
-                        'count' => $cpm['Count'] ?? null,
-                    ],
-                    $responseData
-                ),
-                $advertsCpmForSave
-            );
-        }
 
-//        WbAdvertsCpm::where([['account_id', $this->account->id], ['date', $today]])->delete();
+            $advertsCpmForSave = json_decode(
+                $wbApi->getCpm(type: static::$associationParamColumnAndType['menu_id'], param: $param)
+                        ->getBody()
+                        ->getContents(), true
+            );
+
+            $responseData = array_map(
+                fn ($cpm) => [
+                    'date' => $today,
+                    'type' => static::$associationParamColumnAndType['menu_id'],
+                    'type_name' =>  static::$dictTypes[ static::$associationParamColumnAndType['menu_id']],
+                    'param' => $param,
+                    'cmp'   => $cpm['Cpm'] ?? null,
+                    'count' => $cpm['Count'] ?? null,
+                ],
+                $advertsCpmForSave
+            );
+        }
 
         array_map(
             fn ($chunk) =>
             WbAdvertsCpm::query()->insert($chunk),
-            array_chunk($advertsCpmForSave, 1000)
+            array_chunk($responseData, 1000)
         );
+
+        foreach ($paramsSetId as $param) {
+
+            $advertsCpmForSave = json_decode(
+                $wbApi->getCpm(type: static::$associationParamColumnAndType['set_id'], param: $param)
+                    ->getBody()
+                    ->getContents(), true
+            );
+
+            $responseData = array_map(
+                fn ($cpm) => [
+                    'date' => $today,
+                    'type' => static::$associationParamColumnAndType['set_id'],
+                    'type_name' => static::$dictTypes[static::$associationParamColumnAndType['set_id']],
+                    'param' => $param,
+                    'cmp'   => $cpm['Cpm'] ?? null,
+                    'count' => $cpm['Count'] ?? null,
+                ],
+                $advertsCpmForSave
+            );
+        }
+
+        array_map(
+            fn ($chunk) =>
+            WbAdvertsCpm::query()->insert($chunk),
+            array_chunk($responseData, 1000)
+        );
+
+        foreach ($paramsSubjectId as $param) {
+
+            $advertsCpmForSave = json_decode(
+                $wbApi->getCpm(type: static::$associationParamColumnAndType['subject_id'], param: $param)
+                    ->getBody()
+                    ->getContents(), true
+            );
+
+            $responseData = array_map(
+                fn ($cpm) => [
+                    'date' => $today,
+                    'type' => static::$associationParamColumnAndType['subject_id'],
+                    'type_name' => static::$dictTypes[static::$associationParamColumnAndType['subject_id']],
+                    'param' => $param,
+                    'cmp'   => $cpm['Cpm'] ?? null,
+                    'count' => $cpm['Count'] ?? null,
+                ],
+                $advertsCpmForSave
+            );
+        }
+
+        array_map(
+            fn ($chunk) =>
+                WbAdvertsCpm::query()->insert($chunk),
+                array_chunk($responseData, 1000)
+        );
+
+//        WbAdvertsCpm::where([['account_id', $this->account->id], ['date', $today]])->delete();
     }
 }
