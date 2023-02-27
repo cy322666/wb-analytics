@@ -59,8 +59,8 @@ class WbPrepareAll extends Command
                 new WbIncomesJob($account),
                 new WbPricesJob($account),
                 new WbSalesJob($account),//TODO 429 -> token
-                new WbAdvertsJob($account),
-                new WbAdvertsCmpJob($account),
+//                new WbAdvertsJob($account),
+//                new WbAdvertsCmpJob($account),
                 new WbStocksJob($account),
                 new WbSupplierStocksJob($account),//TODO 429
                 new WbSalesReportsJob($account),
