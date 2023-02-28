@@ -52,7 +52,7 @@ class AppServiceProvider extends ServiceProvider
                 '*ID : *'.$event->job->payload()['uuid'],
                 '*Команда : * '.$event->job->payload()['tags'][0],
                 '*Клиент : * '.$event->job->payload()['tags'][1],
-                '*Текст : * '.$event->exception->getMessage(),
+//                '*Текст : * '.$event->exception->getMessage(),
                 '*Время : * '.Carbon::now()->format('H:i:s'),
             ];
 

@@ -19,7 +19,7 @@ class Account extends Model
 
     protected $fillable = [
         'name',
-        'token_standart',
+        'token_standard',
         'token_statistic',
         'token_adv',
         'is_active',
