@@ -37,9 +37,9 @@ class WbAdvertsJob implements ShouldQueue
         '11' => 'РК на паузе',
     ];
 
-    public function uniqueId(): string
+    public function tags(): array
     {
-        return 'adverts-account-'.$this->account->id;
+        return ['wb:adverts', $this->account->name];
     }
 
     public function __construct(protected Account $account) {}

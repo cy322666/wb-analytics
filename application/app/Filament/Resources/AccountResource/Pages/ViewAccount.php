@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AccountResource\Pages;
 
 use App\Filament\Resources\AccountResource;
 use App\Models\Account;
+use Faker\Core\Color;
 use Filament\Forms\ComponentContainer;
 use Filament\Forms\Components\Card;
 use Filament\Forms\Components\Group;
@@ -25,6 +26,7 @@ use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 
 class ViewAccount extends ViewRecord
@@ -32,6 +34,19 @@ class ViewAccount extends ViewRecord
     protected static string $resource = AccountResource::class;
 
     protected static ?string $title = 'Аккаунт';
+
+    protected function getActions(): array
+    {
+        return [
+            Actions\Action::make('reloadAll')
+                ->label('Выгрузить все')
+                ->action('reloadAll'),
+
+            Actions\Action::make('deleteAll')
+                ->label('Удалить все')
+                ->action('deleteAll'),
+        ];
+    }
 
     protected function getFormSchema(): array
     {
@@ -45,15 +60,14 @@ class ViewAccount extends ViewRecord
                                     TextInput::make('name')
                                         ->label('Название')
                                         ->required(),
-                                    TextInput::make('token')
-                                        ->label('API токен')
+                                    TextInput::make('token_standard')
+                                        ->label('API токен стандарт')
                                         ->required(),
-                                    TextInput::make('token32')
-                                        ->placeholder('API токен 32')
+                                    TextInput::make('token_statistic')
+                                        ->label('API токен статистики')
                                         ->required(),
-                                    TextInput::make('token64')
-                                        ->placeholder('API токен 64')
-                                        ->required(),
+                                    TextInput::make('token_adv')
+                                        ->label('API токен рекламы'),
                                 ]),
 
                             Tabs\Tab::make('База данных')
@@ -92,11 +106,11 @@ class ViewAccount extends ViewRecord
                     Card::make()
                         ->schema([
                             Placeholder::make('created_at')
-                                ->label('Created at')
+                                ->label('Создано')
                                 ->content(fn (Account $record): string => $record->created_at->diffForHumans()),
 
                             Placeholder::make('updated_at')
-                                ->label('Last modified at')
+                                ->label('Обновлено')
                                 ->content(fn (Account $record): string => $record->updated_at->diffForHumans()),
                         ])
                         ->columnSpan(['lg' => 1]),
@@ -109,5 +123,14 @@ class ViewAccount extends ViewRecord
 //                    ->hidden(fn (?Account $record) => $record === null),
 //            ->columns(3)
         ];
+    }
+
+    public function reloadAll()
+    {
+        Artisan::call('wb:reload-all '.$this->getRecord()->id);
+
+//        Artisan::call('wb:delete-all '.$this->getRecord()->id);
+
+        //TODO пуш успех
     }
 }

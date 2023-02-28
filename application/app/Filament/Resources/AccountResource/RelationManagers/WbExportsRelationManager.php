@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 class WbExportsRelationManager extends RelationManager
 {
-    protected static string $relationship = 'exports';
+    protected static string $relationship = 'tasks';
 
     protected static ?string $title = 'Последние события';
 
@@ -39,16 +39,18 @@ class WbExportsRelationManager extends RelationManager
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id'),
-                Tables\Columns\TextColumn::make('type'),
-                Tables\Columns\TextColumn::make('start_at'),
-                Tables\Columns\TextColumn::make('finish_at'),
-                Tables\Columns\TextColumn::make('status')
+                Tables\Columns\TextColumn::make('command')->label('Команда'),
+                Tables\Columns\TextColumn::make('created_at')->label('Создана'),
+                Tables\Columns\TextColumn::make('updated_at')->label('Обновлена'),
+                Tables\Columns\TextColumn::make('status')->label('Статус')
                     ->enum([
                         0 => 'Ожидает',
-                        1 => 'Выгружается',
+                        1 => 'В процессе',
                         2 => 'Завершено',
+                        3 => 'Ошибка',
                     ])
             ])
+            ->defaultSort('id')
             ->filters([
                 //
             ])

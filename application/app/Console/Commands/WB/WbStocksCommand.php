@@ -2,13 +2,13 @@
 
 namespace App\Console\Commands\WB;
 
-//use App\Jobs\ForChainJob;
-use App\Jobs\WbStocksJob;
-use App\Jobs\WbSupplierStocksJob;
+use App\Jobs\WB\WbOrdersJob;
+use App\Jobs\WB\WbStocksJob;
 use App\Models\Account;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Config;
+use Symfony\Component\Console\Command\Command as CommandAlias;
 
 class WbStocksCommand extends Command
 {
@@ -17,7 +17,7 @@ class WbStocksCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'wb:stocks {--account-id=} {--db=mysql}';
+    protected $signature = 'wb:stocks {account}';
 
     /**
      * The console command description.
@@ -33,22 +33,11 @@ class WbStocksCommand extends Command
      */
     public function handle(): int
     {
-        Config::set('database.default', $this->option('db'));
+        $account = Account::query()->find($this->argument('account'));
 
-        $integration = RefIntegration::where('system_name', 'wb')->first();
-        $accounts = $this->option('account-id') !== null
-            ? [Account::find($this->option('account-id'))]
-            : $integration->accounts()->where('is_active', true)->get();
+        WbStocksJob::dispatch($account)->onQueue('wb');//->afterCommit();
+        //->delay();
 
-        foreach ($accounts as $account) {
-            Bus::chain([
-                (new WbStocksJob($account, $this->option('db'))),
-                (new WbSupplierStocksJob($account, $this->option('db'))),
-            ])
-                ->onQueue('WbStocks')
-                ->dispatch();
-        }
-
-        return Command::SUCCESS;
+        return CommandAlias::SUCCESS;
     }
 }

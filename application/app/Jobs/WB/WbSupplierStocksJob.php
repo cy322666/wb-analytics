@@ -30,9 +30,9 @@ class WbSupplierStocksJob implements ShouldQueue
     private static string $defaultDateFrom = '2022-02-13';
     private static int $countDaysLoading = 5;
 
-    public function uniqueId(): string
+    public function tags(): array
     {
-        return 'supplier-stocks-account-'.$this->account->id;
+        return ['wb:supplier-stocks', $this->account->name];
     }
 
     public function __construct(protected Account $account) {}
@@ -55,7 +55,6 @@ class WbSupplierStocksJob implements ShouldQueue
          * или он !== 'NULL'.
          * Чтобы работало для всех клиентов, нужно добавить ключ 'token_api'.
          */
-
         $today = Carbon::now()->subHours(1)->format('Y-m-d');//TODO
 
         $dbWBStocks = WbStock::query()

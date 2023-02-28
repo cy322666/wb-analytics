@@ -27,9 +27,9 @@ class WbIncomesJob implements ShouldQueue, ShouldBeUnique
     private static string $defaultDateFrom = '2022-02-13';
     private static int $countDaysLoading = 5;
 
-    public function uniqueId(): string
+    public function tags(): array
     {
-        return 'incomes-account-'.$this->account->id;
+        return ['wb:incomes', $this->account->name];
     }
 
     public function __construct(protected Account $account) {}

@@ -2,27 +2,26 @@
 
 namespace App\Console\Commands\WB;
 
-use App\Jobs\WB\WbIncomesJob;
 use App\Models\Account;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Artisan;
 use Symfony\Component\Console\Command\Command as CommandAlias;
 
-class WbIncomesCommand extends Command
+class ReloadAll extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'wb:incomes {account}';
+    protected $signature = 'wb:reload-all {account}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = "Получение поставок и обновление сущности 'поставки'";
+    protected $description = 'Command description';
 
     /**
      * Execute the console command.
@@ -33,8 +32,9 @@ class WbIncomesCommand extends Command
     {
         $account = Account::query()->find($this->argument('account'));
 
-        WbIncomesJob::dispatch($account)->onQueue('wb');//->afterCommit();
-        //->delay();
+        $account->tasks()->where('completed', false)->delete();
+
+        $account->addTasksWB();
 
         return CommandAlias::SUCCESS;
     }

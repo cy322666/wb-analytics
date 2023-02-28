@@ -24,9 +24,9 @@ class WbPricesJob implements ShouldQueue
 
     public int $backoff = 10;
 
-    public function uniqueId(): string
+    public function tags(): array
     {
-        return 'prices-account-'.$this->account->id;
+        return ['wb:prices', $this->account->name];
     }
 
     public function __construct(protected Account $account) {}

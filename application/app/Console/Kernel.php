@@ -15,8 +15,12 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
-        $schedule->command('queue:monitor redis:default --max=5')->everyMinute();
+        //php artisan schedule:work
+        //php artisan schedule:list
+
+        $schedule->command('push:one')->everyMinute();
+
+        $schedule->command('queue:monitor redis:wb --max=5')->everyMinute();
     }
 
     /**

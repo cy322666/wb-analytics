@@ -2,10 +2,12 @@
 
 namespace App\Console\Commands\WB;
 
-use App\Jobs\WbPricesJob;
+use App\Jobs\WB\WbPricesJob;
+use App\Jobs\WB\WbStocksJob;
 use App\Models\Account;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
+use Symfony\Component\Console\Command\Command as CommandAlias;
 
 class WbPricesCommand extends Command
 {
@@ -14,7 +16,7 @@ class WbPricesCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'wb:prices {--account-id=} {--db=mysql}';
+    protected $signature = 'wb:prices {account}';
 
     /**
      * The console command description.
@@ -30,17 +32,12 @@ class WbPricesCommand extends Command
      */
     public function handle(): int
     {
-        Config::set('database.default', $this->option('db'));
+        $account = Account::query()->find($this->argument('account'));
 
-        $integration = RefIntegration::where('system_name', 'wb')->first();
-        $accounts = $this->option('account-id') !== null
-            ? [Account::find($this->option('account-id'))]
-            : $integration->accounts()->where('is_active', true)->get();
+        WbPricesJob::dispatch($account)->onQueue('wb');//->afterCommit();
+        //->delay();
 
-        foreach ($accounts as $account) {
-            WbPricesJob::dispatch($account, $this->option('db'))->onQueue('WbPrices');
-        }
 
-        return Command::SUCCESS;
+        return CommandAlias::SUCCESS;
     }
 }

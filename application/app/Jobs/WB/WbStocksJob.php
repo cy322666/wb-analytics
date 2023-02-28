@@ -30,9 +30,9 @@ class WbStocksJob implements ShouldQueue
     private static string $defaultDateFrom = '2022-02-13';
     private static int $countDaysLoading = 5;
 
-    public function uniqueId(): string
+    public function tags(): array
     {
-        return 'stocks-account-'.$this->account->id;
+        return ['wb:stocks', $this->account->name];
     }
 
     public function __construct(protected Account $account) {}
@@ -97,8 +97,6 @@ class WbStocksJob implements ShouldQueue
             ],
             $stocks
         );
-
-//        WbStock::where([['account_id', $this->account->id], ['date', $today], ['is_supplier_stock', false]])->delete();
 
         array_map(
             fn ($chunk) =>

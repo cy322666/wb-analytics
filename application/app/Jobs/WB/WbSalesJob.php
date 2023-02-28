@@ -41,9 +41,9 @@ class WbSalesJob implements ShouldQueue
         'B' => 'сторно возврата',
     ];
 
-    public function uniqueId(): string
+    public function tags(): array
     {
-        return 'sales-account-'.$this->account->id;
+        return ['wb:sales', $this->account->name];
     }
 
     public function __construct(protected Account $account) {}
@@ -117,8 +117,10 @@ class WbSalesJob implements ShouldQueue
 
             array_map(
                 fn($wbSalesChunk) =>
-                WbSale::upsert($wbSalesChunk,
-                    ['date', 'last_change_date', 'barcode', 'sale_id', 'odid', 'g_number']
+                    WbSale::query()
+                        ->upsert($wbSalesChunk, [
+                            'date', 'last_change_date', 'barcode', 'sale_id', 'odid', 'g_number'
+                        ]
                 ),
                 array_chunk($wbSales, 1000)
             );

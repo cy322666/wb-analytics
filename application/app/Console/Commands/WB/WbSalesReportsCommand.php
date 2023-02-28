@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands\WB;
 
-use App\Jobs\WbSalesReportsJob;
+use App\Jobs\WB\WbSalesReportsJob;
 use App\Models\Account;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Config;
+use Symfony\Component\Console\Command\Command as CommandAlias;
 
 class WbSalesReportsCommand extends Command
 {
@@ -14,7 +14,7 @@ class WbSalesReportsCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'wb:sales-reports {--account-id=} {--db=mysql}';
+    protected $signature = 'wb:sale-reports {account}';
 
     /**
      * The console command description.
@@ -30,17 +30,11 @@ class WbSalesReportsCommand extends Command
      */
     public function handle(): int
     {
-        Config::set('database.default', $this->option('db'));
+        $account = Account::query()->find($this->argument('account'));
 
-        $integration = RefIntegration::where('system_name', 'wb')->first();
-        $accounts = $this->option('account-id') !== null
-            ? [Account::find($this->option('account-id'))]
-            : $integration->accounts()->where('is_active', true)->get();
+        WbSalesReportsJob::dispatch($account)->onQueue('wb');//->afterCommit();
+        //->delay();
 
-        foreach ($accounts as $account) {
-            WbSalesReportsJob::dispatch($account, $this->option('db'))->onQueue('WbSalesReports');
-        }
-
-        return Command::SUCCESS;
+        return CommandAlias::SUCCESS;
     }
 }

@@ -2,11 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\WB\Order;
-use App\Models\WB\Stock;
-use App\Models\WB\Supplier\Income;
-use App\Models\WB\Supplies;
-use App\Models\WB\Warehouse;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,7 +19,9 @@ class Account extends Model
 
     protected $fillable = [
         'name',
-        'token',
+        'token_standart',
+        'token_statistic',
+        'token_adv',
         'is_active',
         'user_id',
         'is_remote',
@@ -38,69 +35,40 @@ class Account extends Model
         'db_type',
     ];
 
-    protected static function boot()
+    public static array $commandsWB = [
+        'wb:orders',
+        'wb:incomes',
+        'wb:prices',
+        'wb:sales',
+        'wb:stocks',
+
+        'wb:sale-reports'
+    ];
+
+    public function addTasksWB()
     {
-        parent::boot();
+        foreach (static::$commandsWB as $command) {
 
-        static::created(function($item) {
-
-            Export::query()->create([
-                'user_id'  => $item->user_id,
-                'type'     => Stock::class,
-                'start_at' => Carbon::now(),
-                'account_id' => $item->id,
+            Task::query()->create([
+                'user_id'    => $this->user->id,
+                'account_id' => $this->id,
+                'command'    => $command,
             ]);
+        }
+    }
 
-            Export::query()->create([
-                'user_id'  => $item->user_id,
-                'type'     => Warehouse::class,
-                'start_at' => Carbon::now(),
-                'account_id' => $item->id,
-            ]);
-
-            Export::query()->create([
-                'user_id'  => $item->user_id,
-                'type'     => Order::class,
-                'start_at' => Carbon::now(),
-                'account_id' => $item->id,
-            ]);
-
-            Export::query()->create([
-                'user_id'  => $item->user_id,
-                'type'     => Supplies::class,
-                'start_at' => Carbon::now(),
-                'account_id' => $item->id,
-            ]);
-
-            Export::query()->create([
-                'user_id'  => $item->user_id,
-                'type'     => WB\Supplier\Stock::class,
-                'start_at' => Carbon::now(),
-                'account_id' => $item->id,
-            ]);
-
-            Export::query()->create([
-                'user_id'  => $item->user_id,
-                'type'     => WB\Supplier\Income::class,
-                'start_at' => Carbon::now(),
-                'account_id' => $item->id,
-            ]);
-
-            Export::query()->create([
-                'user_id'  => $item->user_id,
-                'type'     => WB\Supplier\Stock::class,
-                'start_at' => Carbon::now(),
-                'account_id' => $item->id,
-            ]);
-
-            $result = Artisan::call("wb:install $item->id");
-
-            Log::alert(__METHOD__.' : result create db : '.$result);
-        });
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
     public function exports(): HasMany
     {
         return $this->hasMany(Export::class, 'account_id', 'id');
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'account_id', 'id');
     }
 }

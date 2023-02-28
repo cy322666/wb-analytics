@@ -3,6 +3,7 @@
 namespace App\Jobs\WB;
 
 use App\Models\Account;
+use App\Models\Task;
 use App\Models\WB\WbOrder;
 use App\Services\DB\Manager;
 use App\Services\WB\Wildberries;
@@ -23,7 +24,7 @@ class WbOrdersJob implements ShouldQueue, ShouldBeUnique
     public int $tries = 1;
 
     //длительность выполнения
-    public int $timeout = 30;
+    public int $timeout = 120;
 
     //ожидание сек до повтора после фейла
     public int $backoff = 10;
@@ -31,16 +32,13 @@ class WbOrdersJob implements ShouldQueue, ShouldBeUnique
     private static string $defaultDateFrom = '2022-02-13';
     private static int $countDaysLoading = 5;
 
-    public function uniqueId(): string
-    {
-        return 'orders-account-'.$this->account->id;
-    }
-
     public function __construct(protected Account $account) {}
 
-    /**
-     * @throws Exception
-     */
+    public function tags(): array
+    {
+        return ['wb:orders', $this->account->name];
+    }
+
     public function handle()
     {
         ((new Manager()))->init($this->account);
@@ -59,17 +57,17 @@ class WbOrdersJob implements ShouldQueue, ShouldBeUnique
             //@GuzzleHttp\Exception\ClientException
             $ordersResponse = $wbApi->getSupplierOrders($dateFrom);
 
-            if ($ordersResponse->getStatusCode() !== 200) {
-
-                //TODO перехватывать все эксепшены
-
-                throw new Exception('Response code == '.$ordersResponse->getStatusCode().' : '.$ordersResponse->getReasonPhrase());
-            } else {
+//            if ($ordersResponse->getStatusCode() !== 200) {
+//
+//                //TODO перехватывать все эксепшены
+//
+//                throw new Exception('Response code == '.$ordersResponse->getStatusCode().' : '.$ordersResponse->getReasonPhrase());
+//            } else {
 
                 $orders = json_decode(
                     $ordersResponse->getBody()->getContents(), true
                 );
-            }
+//            }
 
             //TODO кажется что можно проще
             $wbOrders = array_map(
@@ -104,7 +102,7 @@ class WbOrdersJob implements ShouldQueue, ShouldBeUnique
                     WbOrder::query()->upsert($wbOrdersChunk, [
                         'date', 'last_change_date', 'barcode', 'odid', 'g_number', 'is_cancel'
                     ]),
-                    array_chunk($wbOrders, 1000)
+                    array_chunk($wbOrders, 100)
             );
         } while (count($orders) >= 100_000);
     }

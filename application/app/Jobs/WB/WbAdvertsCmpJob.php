@@ -39,9 +39,9 @@ class WbAdvertsCmpJob implements ShouldQueue
         'subject_id' => '6',
     ];
 
-    public function uniqueId(): string
+    public function tags(): array
     {
-        return 'advertcmp-account-'.$this->account->id;
+        return ['wb:adverts-cmp', $this->account->name];
     }
 
     public function __construct(protected Account $account) {}

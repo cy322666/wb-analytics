@@ -38,15 +38,14 @@ class CreateAccount extends CreateRecord implements HasForms
                             ->label('Название')
                             ->helperText('Чтобы удобно было различать (Например: название клиента)')
                             ->required(),
-                        TextInput::make('token')
-                            ->label('API токен')
+                        TextInput::make('token_standard')
+                            ->label('API токен стандарт')
                             ->required(),
-                        TextInput::make('token32')
-                            ->label('API токен 32')
+                        TextInput::make('token_statistic')
+                            ->label('API токен статистики')
                             ->required(),
-                        TextInput::make('token64')
-                            ->label('API токен 64')
-                            ->required(),
+                        TextInput::make('token_adv')
+                            ->label('API токен рекламы'),
                         TextInput::make('db_name')
                             ->label('Название Базы')
                             ->helperText('Если нет готовой будет создана с этим названием')

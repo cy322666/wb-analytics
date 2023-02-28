@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Account;
+use App\Models\Task;
 use App\Services\Telegram\Telegram;
+use Carbon\Carbon;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
@@ -31,35 +34,86 @@ class AppServiceProvider extends ServiceProvider
     {
         Queue::failing(function (JobFailed $event) {
 
-            Log::error('appprovider_failing', [
-                $event->connectionName,
-                $event->job->getName(),
-                $event->exception->getMessage(),
-            ]);
+            Account::query()
+                ->where('name', $event->job->payload()['tags'][1])
+                ->first()
+                    ->tasks()
+                    ->where('command', $event->job->payload()['tags'][0])
+                    ->where('completed', false)
+                    ->first()
+                        ->update([
+                            'status' => 3,
+                            'uuid'   => $event->job->payload()['uuid'],
+                        ]);
 
-//            Telegram::send(   $event->job->getName().' : '.$event->exception->getMessage());
+            $text = [
+                '*Ошибка выполнения*',
+                '- - - - - - - - - -',
+                '*ID : *'.$event->job->payload()['uuid'],
+                '*Команда : * '.$event->job->payload()['tags'][0],
+                '*Клиент : * '.$event->job->payload()['tags'][1],
+                '*Текст : * '.$event->exception->getMessage(),
+                '*Время : * '.Carbon::now()->format('H:i:s'),
+            ];
+
+            Telegram::send(implode("\n", $text), [
+                "text" => "Детали",
+                "url"  => env('APP_URL').'/telescope/jobs/'.$event->job->payload()['telescope_uuid']
+            ]);
         });
 
         Queue::before(function (JobProcessing $event) {
 
-            Log::info('appprovider_before', [
-                 $event->connectionName,
-                 $event->job,
-                 $event->job->payload(),
-            ]);
+            Account::query()
+                ->where('name', $event->job->payload()['tags'][1])
+                ->first()
+                    ->tasks()
+                    ->where('command', $event->job->payload()['tags'][0])
+                    ->where('completed', false)
+                    ->first()
+                        ->update([
+                            'status' => 1,
+                            'uuid'   => $event->job->payload()['uuid'],
+                        ]);
 
-//            Telegram::send('Старт задания '.$event->job->getQueue().'...');
+            $text = [
+                '*Старт задания*',
+                '- - - - - - - - - -',
+                '*ID : *'.$event->job->payload()['uuid'],
+                '*Команда : *'.$event->job->payload()['tags'][0],
+                '*Клиент : *'.$event->job->payload()['tags'][1],
+                '*Время : * '.Carbon::now()->format('H:i:s'),
+            ];
+
+            Telegram::send(implode("\n", $text), [
+                "text" => "Детали",
+                "url"  => env('APP_URL').'/telescope/jobs/'.$event->job->payload()['telescope_uuid']
+            ]);
         });
 
         Queue::after(function (JobProcessed $event) {
 
-            Log::info('appprovider_after', [
-                $event->connectionName,
-                $event->job,
-                $event->job->payload(),
-            ]);
+            Task::query()
+                ->where('uuid', $event->job->payload()['uuid'])
+                ->first()
+                    ->update([
+                        'completed' => true,
+                        'status' => 2,
+                    ]);
 
-//            Telegram::send('Конец задания...');
+            $text = [
+                '*Завершение задания*',
+                '- - - - - - - - - -',
+                '*ID : *'.$event->job->payload()['uuid'],
+                '*Команда : * '.$event->job->payload()['tags'][0],
+                '*Клиент : * '.$event->job->payload()['tags'][1],
+                '*Время : * '.Carbon::now()->format('H:i:s'),
+            ];
+
+            Telegram::send(implode("\n", $text), [
+                "text" => "Детали",
+                "url"  => env('APP_URL').'/telescope/jobs/'.$event->job->payload()['telescope_uuid']
+            ]);
         });
     }
 }

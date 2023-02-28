@@ -3,6 +3,7 @@
 namespace App\Console\Commands\WB;
 
 use App\Models\Account;
+use App\Models\Task;
 use App\Services\DB\Manager;
 use Exception;
 use Illuminate\Console\Command;
@@ -14,12 +15,7 @@ use Symfony\Component\Console\Command\Command as CommandAlias;
 
 class Install extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'wb:install {id}';
+    protected $signature = 'wb:install {account}';
 
     /**
      * The console command description.
@@ -38,7 +34,7 @@ class Install extends Command
     {
         $migrations = scandir(database_path('migrations/wb-new/'));
 
-        $account = Account::query()->find($this->argument('id'));
+        $account = Account::query()->find($this->argument('account'));
 
         ((new Manager()))->init($account);
 
@@ -58,6 +54,9 @@ class Install extends Command
                 Artisan::call('migrate --database=second --path=database/migrations/wb-new/'.$filename);
             }
         }
+
+        //TODO test
+        $account->addTasksWB();
 
         return CommandAlias::SUCCESS;
     }

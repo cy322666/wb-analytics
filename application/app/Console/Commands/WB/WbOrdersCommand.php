@@ -4,6 +4,7 @@ namespace App\Console\Commands\WB;
 
 use App\Jobs\WB\WbOrdersJob;
 use App\Models\Account;
+use App\Models\Task;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -38,7 +39,8 @@ class WbOrdersCommand extends Command
     {
         $account = Account::query()->find($this->argument('account'));
 
-        WbOrdersJob::dispatch($account)->onQueue('WbOrders');
+        WbOrdersJob::dispatch($account)->onQueue('wb');//->afterCommit();
+            //->delay();
 
         return CommandAlias::SUCCESS;
     }
