@@ -34,10 +34,7 @@ class WbOrdersJob implements ShouldQueue, ShouldBeUnique
     private static string $defaultDateFrom;
     private static int $countDaysLoading = 5;
 
-    public function __construct(protected Account $account)
-    {
-        static::$defaultDateFrom = Carbon::now()->subDays(90)->format('Y-m-d');
-    }
+    public function __construct(protected Account $account) {}
 
     public function tags(): array
     {
@@ -49,6 +46,8 @@ class WbOrdersJob implements ShouldQueue, ShouldBeUnique
      */
     public function handle()
     {
+        static::$defaultDateFrom = Carbon::now()->subDays(90)->format('Y-m-d');
+
         ((new Manager()))->init($this->account);
 
         $wbApi = (new Wildberries([
