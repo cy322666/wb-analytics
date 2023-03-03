@@ -9,6 +9,8 @@ class Task extends Model
 {
     use HasFactory;
 
+    protected $connection = 'default';
+
     protected $fillable = [
         'user_id',
         'account_id',
