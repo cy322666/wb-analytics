@@ -9,7 +9,7 @@ class Task extends Model
 {
     use HasFactory;
 
-    protected $connection = 'default';
+    protected $connection = 'pgsql';
 
     protected $fillable = [
         'user_id',
