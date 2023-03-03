@@ -16,6 +16,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
+use function Symfony\Component\String\s;
+
 class WbOrdersJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -29,16 +31,22 @@ class WbOrdersJob implements ShouldQueue, ShouldBeUnique
     //ожидание сек до повтора после фейла
     public int $backoff = 10;
 
-    private static string $defaultDateFrom = '2022-02-13';
+    private static string $defaultDateFrom;
     private static int $countDaysLoading = 5;
 
-    public function __construct(protected Account $account) {}
+    public function __construct(protected Account $account)
+    {
+        static::$defaultDateFrom = Carbon::now()->subDays(90)->format('Y-m-d');
+    }
 
     public function tags(): array
     {
         return ['wb:orders', $this->account->name];
     }
 
+    /**
+     * @throws Exception
+     */
     public function handle()
     {
         ((new Manager()))->init($this->account);
@@ -49,10 +57,10 @@ class WbOrdersJob implements ShouldQueue, ShouldBeUnique
         ]));
 
         $dateFrom = WbOrder::query()->exists()
-            ? Carbon::parse(WbOrder::query()->latest()->first()->date)->subDays(2)
+            ? Carbon::parse(WbOrder::query()->latest()->first()->last_change_date)->subDays(2)
             : Carbon::parse(static::$defaultDateFrom);
 
-        do {
+//        do {
             //@GuzzleException
             //@GuzzleHttp\Exception\ClientException
             $ordersResponse = $wbApi->getSupplierOrders($dateFrom);
@@ -104,7 +112,7 @@ class WbOrdersJob implements ShouldQueue, ShouldBeUnique
                     ]),
                     array_chunk($wbOrders, 100)
             );
-        } while (count($orders) >= 100_000);
+//        } while (count($orders) >= 100_000);
     }
 
     //TODO command
