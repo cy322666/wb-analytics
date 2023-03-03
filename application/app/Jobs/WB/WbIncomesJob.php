@@ -76,7 +76,7 @@ class WbIncomesJob implements ShouldQueue, ShouldBeUnique
 
             array_map(
                 fn ($chunk) =>
-                    WbIncome::query()->upsert($chunk, ['income_id', 'date', 'last_change_date', 'barcode', 'status']),
+                    WbIncome::query()->upsert($chunk, ['income_id', 'barcode']),
                     array_chunk($wbIncomes, 1000)
             );
         } while (count($incomes) >= 100_000);

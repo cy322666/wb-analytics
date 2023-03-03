@@ -106,9 +106,7 @@ class WbOrdersJob implements ShouldQueue, ShouldBeUnique
             //TODO посмотреть что под капотом происходит
             array_map(
                 fn ($wbOrdersChunk) =>
-                    WbOrder::query()->upsert($wbOrdersChunk, [
-                        'date', 'last_change_date', 'barcode', 'odid', 'g_number', 'is_cancel'
-                    ]),
+                    WbOrder::query()->upsert($wbOrdersChunk, ['odid']),
                     array_chunk($wbOrders, 100)
             );
 //        } while (count($orders) >= 100_000);

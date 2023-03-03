@@ -118,9 +118,7 @@ class WbSalesJob implements ShouldQueue
             array_map(
                 fn($wbSalesChunk) =>
                     WbSale::query()
-                        ->upsert($wbSalesChunk, [
-                            'date', 'last_change_date', 'barcode', 'sale_id', 'odid', 'g_number'
-                        ]
+                        ->upsert($wbSalesChunk, ['sale_id']
                 ),
                 array_chunk($wbSales, 1000)
             );
