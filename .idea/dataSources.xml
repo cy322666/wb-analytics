@@ -22,5 +22,12 @@
       <jdbc-url>jdbc:postgresql://5.63.159.148:5429/postgres</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="datasfera_1@89.108.115.241" uuid="3d4fe266-6288-495d-9058-5127939b4cba">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://89.108.115.241:3306/datasfera_1</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

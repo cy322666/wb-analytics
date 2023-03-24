@@ -3,6 +3,7 @@
 namespace App\Jobs\WB;
 
 use App\Models\Account;
+use App\Models\WB\WbOrder;
 use App\Models\WB\WbStock;
 use App\Services\DB\Manager;
 use App\Services\WB\Wildberries;
@@ -22,12 +23,13 @@ class WbStocksJob implements ShouldQueue
     public int $tries = 1;
 
     //длительность выполнения
-    public int $timeout = 30;
+    public int $timeout = 300;
 
     //ожидание сек до повтора после фейла
     public int $backoff = 10;
 
-    private static string $defaultDateFrom = '2022-02-13';
+    private static string $defaultDateFrom;
+
     private static int $countDaysLoading = 5;
 
     public function tags(): array
@@ -52,23 +54,19 @@ class WbStocksJob implements ShouldQueue
             'statistic' => $this->account->token_statistic,
         ]));
 
-        $dateFrom = Carbon::parse('2022-01-01');//TODO static
+        static::$defaultDateFrom = Carbon::now()->subYears(3)->format('Y-m-d');
+
+        $dateFrom = WbStock::query()->exists()
+            ? Carbon::parse(WbStock::query()->latest()->first()->last_change_date)->subDays(7)
+            : Carbon::parse(static::$defaultDateFrom);
 
         $stocksResponse = $wbApi->getSupplierStocks($dateFrom);
 
-        $today = Carbon::now()->subHours(1)->format('Y-m-d');//TODO
+        $today = Carbon::now()->format('Y-m-d');
 
-        if ($stocksResponse->getStatusCode() !== 200) {
-
-            //TODO перехватывать все эксепшены
-
-            throw new Exception('Response code == '.$stocksResponse->getStatusCode().' : '.$ordersResponse->getReasonPhrase());
-        } else {
-
-            $stocks = json_decode(
-                $stocksResponse->getBody()->getContents(), true
-            );
-        }
+        $stocks = json_decode(
+            $stocksResponse->getBody()->getContents(), true
+        );
 
         $wbStocks = array_map(
             fn ($stock) => [

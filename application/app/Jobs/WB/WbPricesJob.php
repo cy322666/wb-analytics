@@ -5,6 +5,7 @@ namespace App\Jobs\WB;
 use App\Models\Account;
 use App\Models\WB\WbPrice;
 use App\Services\DB\Manager;
+use App\Services\WB\Wildberries;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -20,7 +21,7 @@ class WbPricesJob implements ShouldQueue
 
     public int $tries = 1;
 
-    public int $timeout = 30;
+    public int $timeout = 300;
 
     public int $backoff = 10;
 
@@ -38,7 +39,7 @@ class WbPricesJob implements ShouldQueue
     {
         ((new Manager()))->init($this->account);
 
-        $wbApi = (new \App\Services\WB\Wildberries([
+        $wbApi = (new Wildberries([
             'standard'  => $this->account->token_standard,
             'statistic' => $this->account->token_statistic,
         ]));

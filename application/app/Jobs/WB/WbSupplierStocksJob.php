@@ -22,13 +22,12 @@ class WbSupplierStocksJob implements ShouldQueue
     public int $tries = 1;
 
     //длительность выполнения
-    public int $timeout = 30;
+    public int $timeout = 300;
 
     //ожидание сек до повтора после фейла
     public int $backoff = 10;
 
-    private static string $defaultDateFrom = '2022-02-13';
-    private static int $countDaysLoading = 5;
+    private static int $countDaysLoading = 7;
 
     public function tags(): array
     {
@@ -55,7 +54,7 @@ class WbSupplierStocksJob implements ShouldQueue
          * или он !== 'NULL'.
          * Чтобы работало для всех клиентов, нужно добавить ключ 'token_api'.
          */
-        $today = Carbon::now()->subHours(1)->format('Y-m-d');//TODO
+        $today = Carbon::now()->format('Y-m-d');
 
         $dbWBStocks = WbStock::query()
             ->orderBy('date', 'DESC')
@@ -67,26 +66,14 @@ class WbSupplierStocksJob implements ShouldQueue
         $skip = 0;
         $take = 1000;
 
-        do {
+//        do {
             $supplierStocksResponse = json_decode(
                 $wbApi->getStocks($skip, $take)->getBody()->getContents(), true
             );
 
-            if ($supplierStocksResponse->getStatusCode() !== 200) {
-
-                //TODO перехватывать все эксепшены
-
-                throw new \Exception('Response code == '.$supplierStocksResponse->getStatusCode().' : '.$ordersResponse->getReasonPhrase());
-            } else {
-
-                $stocks = json_decode(
-                    $supplierStocksResponse->getBody()->getContents(), true
-                );
-            }
-
-//            if ($result->stocks === null) {
-//                break;
-//            }
+            $stocks = json_decode(
+                $supplierStocksResponse->getBody()->getContents(), true
+            );
 
             $supplierStocks = array_merge(
                 $stocks,
@@ -120,9 +107,9 @@ class WbSupplierStocksJob implements ShouldQueue
                 )
             );
 
-            $skip += count($result);
+//            $skip += count($result);
 
-        } while ($skip < $result['total']);
+//        } while ($skip < $result['total']);
 
 //        WbStock::where([['account_id', $this->account->id], ['date', $today], ['is_supplier_stock', true]])->delete();
 

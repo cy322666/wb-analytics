@@ -14,7 +14,7 @@ class PushCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'push:one';
+    protected $signature = 'push:tasks';
 
     /**
      * The console command description.
@@ -30,15 +30,18 @@ class PushCommand extends Command
      */
     public function handle(): int
     {
-        $task = Task::query()
+        $tasks = Task::query()
             ->where('completed', false)
             ->where('status', 0)
             ->where('is_active', true)
-            ->first();
+            ->get();
 
-        if ($task) {
+        foreach ($tasks as $task) {
 
             Artisan::call($task->command.' '.$task->account_id);
+
+            $task->status = 1;
+            $task->save();
         }
 
         return CommandAlias::SUCCESS;

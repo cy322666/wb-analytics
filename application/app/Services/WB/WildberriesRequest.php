@@ -4,6 +4,7 @@ namespace App\Services\WB;
 
 use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 use Psr\Http\Message\ResponseInterface;
 use KFilippovk\Wildberries\Exceptions\WildberriesHttpException;
 use Throwable;
@@ -43,9 +44,12 @@ class WildberriesRequest
     private function runGetRequest(string $url, array $options): ResponseInterface
     {
         try {
+            Log::channel('request')->info($url, $options['query'] ?? []);
+
             return $this->httpClient->get($url, $options);
         }
         catch (Throwable $exception) {
+
             throw new Exception($exception);
         }
     }

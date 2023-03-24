@@ -175,7 +175,6 @@
       <path value="$PROJECT_DIR$/application/vendor/laravel/horizon" />
       <path value="$PROJECT_DIR$/application/vendor/laravel/sanctum" />
       <path value="$PROJECT_DIR$/application/vendor/laravel/sail" />
-      <path value="$PROJECT_DIR$/application/vendor/laravel/octane" />
       <path value="$PROJECT_DIR$/application/vendor/mockery/mockery" />
       <path value="$PROJECT_DIR$/application/vendor/monolog/monolog" />
       <path value="$PROJECT_DIR$/application/vendor/myclabs/deep-copy" />
@@ -209,7 +208,6 @@
       <path value="$PROJECT_DIR$/application/vendor/symfony/deprecation-contracts" />
       <path value="$PROJECT_DIR$/application/vendor/symfony/routing" />
       <path value="$PROJECT_DIR$/application/vendor/symfony/service-contracts" />
-      <path value="$PROJECT_DIR$/application/vendor/symfony/http-foundation" />
       <path value="$PROJECT_DIR$/application/vendor/symfony/error-handler" />
       <path value="$PROJECT_DIR$/application/vendor/symfony/process" />
       <path value="$PROJECT_DIR$/application/vendor/symfony/console" />
@@ -271,6 +269,8 @@
       <path value="$PROJECT_DIR$/application/vendor/guzzlehttp/uri-template" />
       <path value="$PROJECT_DIR$/application/vendor/laravel/telescope" />
       <path value="$PROJECT_DIR$/application/vendor/symfony/yaml" />
+      <path value="$PROJECT_DIR$/application/vendor/laravel/octane" />
+      <path value="$PROJECT_DIR$/application/vendor/symfony/http-foundation" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.0">

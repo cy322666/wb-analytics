@@ -15,6 +15,10 @@ use Symfony\Component\Console\Command\Command as CommandAlias;
 
 class Install extends Command
 {
+    //TODO
+    //confirm delete database
+    //level access
+
     protected $signature = 'wb:install {account}';
 
     /**

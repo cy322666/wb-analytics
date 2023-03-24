@@ -1,28 +1,34 @@
 <?php
 
-namespace App\Console\Commands\WB;
+namespace App\Console\Commands\Wb;
 
 use App\Models\Account;
+use App\Models\WB\WbIncome;
+use App\Models\WB\WbOrder;
+use App\Models\WB\WbPrice;
+use App\Models\WB\WbSale;
+use App\Models\WB\WbSalesReport;
+use App\Models\WB\WbStock;
+use App\Services\DB\Manager;
 use Filament\Notifications\Notification;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Artisan;
 use Symfony\Component\Console\Command\Command as CommandAlias;
 
-class ReloadAll extends Command
+class TruncateAll extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'wb:reload-all {account}';
+    protected $signature = 'wb:truncate-all {account}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Чистит все wb таблицы клиента';
 
     /**
      * Execute the console command.
@@ -35,7 +41,15 @@ class ReloadAll extends Command
 
         $account->tasks()->delete();
 
-        $account->addTasksWB();
+        ((new Manager()))->init($account);
+
+        WbStock::query()->truncate();
+        WbIncome::query()->truncate();
+        WbOrder::query()->truncate();
+        WbPrice::query()->truncate();
+        WbSalesReport::query()->truncate();
+        WbStock::query()->truncate();
+        WbSale::query()->truncate();
 
         Notification::make()
             ->title('Успешно')

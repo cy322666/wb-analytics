@@ -31,7 +31,7 @@ class WbExportsRelationManager extends RelationManager
 
     protected function getTablePollingInterval(): ?string
     {
-        return '10s';
+        return '5s';
     }
 
     public static function table(Table $table): Table
@@ -82,6 +82,6 @@ class WbExportsRelationManager extends RelationManager
                      ->deselectRecordsAfterCompletion()
                      ->requiresConfirmation()
                      ->label('Повторить')
-            ]);
+            ])->poll('5s');
     }
 }

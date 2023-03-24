@@ -176,7 +176,6 @@
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/laravel/horizon" />
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/laravel/sanctum" />
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/laravel/sail" />
-      <excludeFolder url="file://$MODULE_DIR$/application/vendor/laravel/octane" />
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/mockery/mockery" />
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/monolog/monolog" />
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/myclabs/deep-copy" />
@@ -210,7 +209,6 @@
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/symfony/deprecation-contracts" />
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/symfony/routing" />
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/symfony/service-contracts" />
-      <excludeFolder url="file://$MODULE_DIR$/application/vendor/symfony/http-foundation" />
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/symfony/error-handler" />
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/symfony/process" />
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/symfony/console" />
@@ -272,6 +270,8 @@
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/guzzlehttp/uri-template" />
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/laravel/telescope" />
       <excludeFolder url="file://$MODULE_DIR$/application/vendor/symfony/yaml" />
+      <excludeFolder url="file://$MODULE_DIR$/application/vendor/laravel/octane" />
+      <excludeFolder url="file://$MODULE_DIR$/application/vendor/symfony/http-foundation" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

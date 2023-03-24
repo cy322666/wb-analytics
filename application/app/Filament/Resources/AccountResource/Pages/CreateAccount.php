@@ -94,12 +94,12 @@ class CreateAccount extends CreateRecord implements HasForms
                             ])
                             ->reactive()
                             ->required()
-                            ->default('pgsql'),
+                            ->default(env('APP_URL')),
                         TextInput::make('db_port')
                             ->label('Порт')
                             ->reactive()
                             ->required()
-                            ->default('5432'),
+                            ->default('5429'),
 
                         Hidden::make('user_id')
                             ->default(Auth::user()->id),

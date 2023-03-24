@@ -18,9 +18,9 @@ class Kernel extends ConsoleKernel
         //php artisan schedule:work
         //php artisan schedule:list
 
-        $schedule->command('push:one')->everyMinute();
+        $schedule->command('push:tasks')->everyMinute();
 
-        $schedule->command('queue:monitor redis:wb --max=5')->everyMinute();
+//        $schedule->command('queue:monitor redis:wb --max=5')->everyMinute();
     }
 
     /**

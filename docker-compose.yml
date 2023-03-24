@@ -10,6 +10,7 @@ services:
         links:
             - postgresql
             - redis
+            - supervisor
         networks:
             - cluster
         working_dir: /var/www/html

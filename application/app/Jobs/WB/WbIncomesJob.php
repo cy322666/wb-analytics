@@ -20,11 +20,12 @@ class WbIncomesJob implements ShouldQueue, ShouldBeUnique
 
     public int $tries = 1;
 
-    public int $timeout = 30;
+    public int $timeout = 300;
 
     public int $backoff = 10;
 
-    private static string $defaultDateFrom = '2022-02-13';
+    private static string $defaultDateFrom;
+
     private static int $countDaysLoading = 5;
 
     public function tags(): array
@@ -34,6 +35,9 @@ class WbIncomesJob implements ShouldQueue, ShouldBeUnique
 
     public function __construct(protected Account $account) {}
 
+    /**
+     * @throws \Exception
+     */
     public function handle()
     {
         ((new Manager()))->init($this->account);
@@ -43,42 +47,41 @@ class WbIncomesJob implements ShouldQueue, ShouldBeUnique
             'statistic' => $this->account->token_statistic,
         ]));
 
+        static::$defaultDateFrom = Carbon::now()->subYears(3)->format('Y-m-d');
 
         $dateFrom = WbIncome::query()->exists()
-            ? Carbon::parse(WbIncome::query()->latest()->first()->date)->subDays(2)
+            ? Carbon::parse(WbIncome::query()->latest()->first()->date)->subDays(static::$countDaysLoading)
             : Carbon::parse(static::$defaultDateFrom);
 
-        do {
-            $incomesResponse = $wbApi->getSupplierIncomes($dateFrom);
+        $incomesResponse = $wbApi->getSupplierIncomes($dateFrom);
 
-            $incomes = json_decode(
-                $incomesResponse->getBody()->getContents(), true
-            );
+        $incomes = json_decode(
+            $incomesResponse->getBody()->getContents(), true
+        );
 
-            $wbIncomes = array_map(
-                fn ($income) => [
-                    'income_id' => $income['incomeId'],
-                    'number'    => $income['number'],
-                    'date'      => $income['date'],
-                    'last_change_date' => $income['lastChangeDate'],
-                    'supplier_article' => $income['supplierArticle'],
-                    'tech_size' =>   $income['techSize'],
-                    'barcode' =>     $income['barcode'],
-                    'quantity' =>    $income['quantity'],
-                    'total_price' => $income['totalPrice'],
-                    'date_close' =>  $income['dateClose'],
-                    'warehouse_name' => $income['warehouseName'],
-                    'nm_id'  => $income['nmId'],
-                    'status' => $income['status'],
-                ],
-                $incomes
-            );
+        $wbIncomes = array_map(
+            fn ($income) => [
+                'income_id' => $income['incomeId'],
+                'number'    => $income['number'],
+                'date'      => $income['date'],
+                'last_change_date' => $income['lastChangeDate'],
+                'supplier_article' => $income['supplierArticle'],
+                'tech_size' =>   $income['techSize'],
+                'barcode' =>     $income['barcode'],
+                'quantity' =>    $income['quantity'],
+                'total_price' => $income['totalPrice'],
+                'date_close' =>  $income['dateClose'],
+                'warehouse_name' => $income['warehouseName'],
+                'nm_id'  => $income['nmId'],
+                'status' => $income['status'],
+            ],
+            $incomes
+        );
 
-            array_map(
-                fn ($chunk) =>
-                    WbIncome::query()->upsert($chunk, ['income_id', 'barcode']),
-                    array_chunk($wbIncomes, 1000)
-            );
-        } while (count($incomes) >= 100_000);
+        array_map(
+            fn ($chunk) =>
+                WbIncome::query()->upsert($chunk, ['income_id', 'barcode']),
+                array_chunk($wbIncomes, 1000)
+        );
     }
 }

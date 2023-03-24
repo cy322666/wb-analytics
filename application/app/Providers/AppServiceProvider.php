@@ -34,17 +34,19 @@ class AppServiceProvider extends ServiceProvider
     {
         Queue::failing(function (JobFailed $event) {
 
-            Account::query()
-                ->where('name', $event->job->payload()['tags'][1])
-                ->first()
+            try {
+                Account::query()
+                    ->where('name', $event->job->payload()['tags'][1])
+                    ->first()
                     ->tasks()
                     ->where('command', $event->job->payload()['tags'][0])
                     ->where('completed', false)
                     ->first()
-                        ->update([
-                            'status' => 3,
-                            'uuid'   => $event->job->payload()['uuid'],
-                        ]);
+                    ->update([
+                        'status' => 3,
+                        'uuid'   => $event->job->payload()['uuid'],
+                    ]);
+            } catch (\Throwable $exception) {}
 
             $text = [
                 '*Ошибка выполнения*',
@@ -64,17 +66,19 @@ class AppServiceProvider extends ServiceProvider
 
         Queue::before(function (JobProcessing $event) {
 
-            Account::query()
-                ->where('name', $event->job->payload()['tags'][1])
-                ->first()
-                    ->tasks()
-                    ->where('command', $event->job->payload()['tags'][0])
-                    ->where('completed', false)
+            try {
+                Account::query()
+                    ->where('name', $event->job->payload()['tags'][1])
                     ->first()
-                        ->update([
-                            'status' => 1,
-                            'uuid'   => $event->job->payload()['uuid'],
-                        ]);
+                        ->tasks()
+                        ->where('command', $event->job->payload()['tags'][0])
+                        ->where('completed', false)
+                        ->first()
+                            ->update([
+                                'status' => 1,
+                                'uuid'   => $event->job->payload()['uuid'],
+                            ]);
+            } catch (\Throwable $exception) {}
 
             $text = [
                 '*Старт задания*',
@@ -93,13 +97,15 @@ class AppServiceProvider extends ServiceProvider
 
         Queue::after(function (JobProcessed $event) {
 
-            Task::query()
-                ->where('uuid', $event->job->payload()['uuid'])
-                ->first()
-                    ->update([
-                        'completed' => true,
-                        'status' => 2,
-                    ]);
+            try {
+                Task::query()
+                    ->where('uuid', $event->job->payload()['uuid'])
+                    ->first()
+                        ->update([
+                            'completed' => true,
+                            'status' => 2,
+                        ]);
+            } catch (\Throwable $exception) {}
 
             $text = [
                 '*Завершение задания*',

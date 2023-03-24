@@ -2,12 +2,10 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Log;
 
 class Account extends Model
 {
@@ -33,6 +31,7 @@ class Account extends Model
         'db_password',
         'db_host',
         'db_type',
+        'time_load',//время выгрузки
     ];
 
     public static array $commandsWB = [
@@ -53,18 +52,23 @@ class Account extends Model
                 'user_id'    => $this->user->id,
                 'account_id' => $this->id,
                 'command'    => $command,
+                'params'     => json_encode(['time' => $this->time_load])
             ]);
         }
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function reloadTask(Task $task)
     {
-        return $this->belongsTo(User::class, 'user_id', 'id');
+        $task->is_active = true;
+        $task->completed = true;
+        $task->status = 0;
+        $task->uuid = null;
+        $task->save();
     }
 
-    public function exports(): HasMany
+    public function user(): BelongsTo
     {
-        return $this->hasMany(Export::class, 'account_id', 'id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
     public function tasks(): HasMany

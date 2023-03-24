@@ -5,6 +5,7 @@ namespace App\Console\Commands\WB;
 use App\Jobs\WB\WbOrdersJob;
 use App\Jobs\WB\WbStocksJob;
 use App\Models\Account;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Config;
@@ -35,8 +36,10 @@ class WbStocksCommand extends Command
     {
         $account = Account::query()->find($this->argument('account'));
 
-        WbStocksJob::dispatch($account)->onQueue('wb');//->afterCommit();
-        //->delay();
+        WbStocksJob::dispatch($account)
+            ->onQueue('wb')
+            ->delay(Carbon::parse($account->time_load)->timezone('Europe/Moscow'))
+            ->afterCommit();
 
         return CommandAlias::SUCCESS;
     }

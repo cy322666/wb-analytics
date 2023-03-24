@@ -13,6 +13,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\ViewRecord;
@@ -45,92 +46,20 @@ class ViewAccount extends ViewRecord
             Actions\Action::make('deleteAll')
                 ->label('Удалить все')
                 ->action('deleteAll'),
-        ];
-    }
 
-    protected function getFormSchema(): array
-    {
-        return [
-            Group::make()
-                ->schema([
-                    Tabs::make('Heading')
-                        ->tabs([
-                            Tabs\Tab::make('Основное')
-                                ->schema([
-                                    TextInput::make('name')
-                                        ->label('Название')
-                                        ->required(),
-                                    TextInput::make('token_standard')
-                                        ->label('API токен стандарт')
-                                        ->required(),
-                                    TextInput::make('token_statistic')
-                                        ->label('API токен статистики')
-                                        ->required(),
-                                    TextInput::make('token_adv')
-                                        ->label('API токен рекламы'),
-                                ]),
-
-                            Tabs\Tab::make('База данных')
-                                ->schema([
-                                    TextInput::make('db_host')
-                                        ->label('IP')
-                                        ->required(),
-                                    TextInput::make('db_username')
-                                        ->label('Логин')
-                                        ->required(),
-                                    TextInput::make('db_password')
-                                        ->label('Пароль')
-                                        ->required(),
-                                    TextInput::make('db_port')
-                                        ->label('Порт')
-                                        ->required(),
-                                    TextInput::make('db_type')
-                                        ->label('Тип')
-                                        ->required(),
-                                    TextInput::make('db_name')
-                                        ->placeholder('База данных')
-                                        ->required(),
-                                ]),
-//                            Tabs\Tab::make('Label 3')
-//                                ->schema([
-//                                    // ...
-//                                ]),
-                        ])->columnSpan(['lg' => 2]),
-
-//                    Card::make()
-//                        ->schema([
-//
-//                        ])
-//                        ->columnSpan(['lg' => 2]),
-
-                    Card::make()
-                        ->schema([
-                            Placeholder::make('created_at')
-                                ->label('Создано')
-                                ->content(fn (Account $record): string => $record->created_at->diffForHumans()),
-
-                            Placeholder::make('updated_at')
-                                ->label('Обновлено')
-                                ->content(fn (Account $record): string => $record->updated_at->diffForHumans()),
-                        ])
-                        ->columnSpan(['lg' => 1]),
-                ])
-                ->columns(3)
-//                    ->columnSpan(['lg' => 2]),
-//                    ->columnSpan(['lg' => fn (?Account $record) => $record === null ? 3 : 2]),
-
-
-//                    ->hidden(fn (?Account $record) => $record === null),
-//            ->columns(3)
+            Actions\Action::make('truncateAll')
+                ->label('Отчистить БД')
+                ->action('truncateAll'),
         ];
     }
 
     public function reloadAll()
     {
         Artisan::call('wb:reload-all '.$this->getRecord()->id);
+    }
 
-//        Artisan::call('wb:delete-all '.$this->getRecord()->id);
-
-        //TODO пуш успех
+    public function truncateAll()
+    {
+        Artisan::call('wb:truncate-all '.$this->getRecord()->id);
     }
 }
