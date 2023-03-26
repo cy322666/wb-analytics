@@ -1,25 +1,22 @@
 <?php
 
-namespace App\Console\Commands\WB;
+namespace App\Console\Commands;
 
 use App\Models\Account;
-use App\Models\Task;
 use App\Services\DB\Manager;
-use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Console\Command\Command as CommandAlias;
 
-class Install extends Command
+class Test extends Command
 {
-    //TODO
-    //confirm delete database
-    //level access
-
-    protected $signature = 'wb:install {account}';
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'wb:test-install {account}';
 
     /**
      * The console command description.
@@ -32,7 +29,7 @@ class Install extends Command
      * Execute the console command.
      *
      * @return int
-     * @throws Exception
+     * @throws \Exception
      */
     public function handle(): int
     {
@@ -46,18 +43,19 @@ class Install extends Command
 
             if ($account->is_active === true) {
 
-                DB::connection('pgsql')->statement("CREATE DATABASE $account->db_name;");
+                $result = DB::connection('pgsql')->statement("CREATE DATABASE $account->db_name;");
+
+                dump('result query create : '.$result);
+
             } else
-                throw new Exception('Account no active');
+                throw new \Exception('Account no active');
         }
 
-        foreach ($migrations as $filename) {
+        dump('start migration');
 
-            if (strlen($filename) > 5) {
+        $result = Artisan::call('wb:migrate '. $account->id);
 
-                Artisan::call('migrate --database=second --path=database/migrations/wb-new/'.$filename);
-            }
-        }
+        dump('result migration : '.$result);
 
         return CommandAlias::SUCCESS;
     }

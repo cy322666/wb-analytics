@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Account;
+use App\Observers\AccountObserver;
 use App\Services\Telegram\Telegram;
 use Filament\Notifications\Notification;
 use Illuminate\Auth\Events\Registered;
@@ -13,6 +15,10 @@ use Illuminate\Support\Facades\Log;
 
 class EventServiceProvider extends ServiceProvider
 {
+    protected $observers = [
+        Account::class => [AccountObserver::class],
+    ];
+
     /**
      * The event to listener mappings for the application.
      *

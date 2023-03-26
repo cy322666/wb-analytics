@@ -99,7 +99,7 @@ class CreateAccount extends CreateRecord implements HasForms
                             ->label('Порт')
                             ->reactive()
                             ->required()
-                            ->default('5429'),
+                            ->default('5432'),
 
                         Hidden::make('user_id')
                             ->default(Auth::user()->id),
