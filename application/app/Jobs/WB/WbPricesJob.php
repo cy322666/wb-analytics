@@ -72,8 +72,7 @@ class WbPricesJob implements ShouldQueue
             $prices
         );
 
-//        WbPrice::where([['account_id', $this->account->id], ['date', $today]])->delete();
-
+        WbPrice::where('date', $today)->delete();
         array_map(
             fn ($chunk) =>
                 WbPrice::query()->insert($chunk),
