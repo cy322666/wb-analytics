@@ -19,13 +19,13 @@ class WbSalesReportsJob implements ShouldQueue
 
     public int $tries = 1;
 
-    public int $timeout = 720;
+    public int $timeout = 5400;
 
     public int $backoff = 10;
 
     private static string $defaultDateFrom;
 
-    private static int $countDaysLoading = 5;
+    private static int $countDaysLoading = 14;
 
     public function tags(): array
     {
@@ -48,18 +48,23 @@ class WbSalesReportsJob implements ShouldQueue
 
         static::$defaultDateFrom = Carbon::now()->subYears(3)->format('Y-m-d');
 
-        $dateFrom = WbSalesReport::query()->exists()
-            ? Carbon::parse(WbSalesReport::query()->latest()->first()->date)->subDays(static::$countDaysLoading)
-            : Carbon::parse(static::$defaultDateFrom);
+        [$dateFrom, $rrdid] = WbSalesReport::query()->exists()
+            ? [
+                Carbon::parse(WbSalesReport::query()->latest('rr_dt')->value('rr_dt'))->subDays(static::$countDaysLoading),
+                WbSalesReport::query()->latest('rrd_id')->value('rrd_id')
+            ]
+            : [Carbon::parse(static::$defaultDateFrom), 0];
 
         $salesReportsResponse = $wbApi->getSupplierReportDetailByPeriod(
             $dateFrom,
             Carbon::today(),
             limit: 80_000,
+            rrdid: $rrdid,
         );
 
         $reports = json_decode(
-            $salesReportsResponse->getBody()->getContents(), true
+            $salesReportsResponse->getBody()->getContents(),
+            true
         );
 
         $wbSalesReports = array_map(
@@ -128,8 +133,8 @@ class WbSalesReportsJob implements ShouldQueue
 
         array_map(
             fn ($wbSalesReportsChunk) =>
-                WbSalesReport::query()->upsert($wbSalesReportsChunk, ['rrd_id']),
-                array_chunk($wbSalesReports, 1000)
+            WbSalesReport::query()->upsert($wbSalesReportsChunk, ['rrd_id']),
+            array_chunk($wbSalesReports, 1000)
         );
     }
 }
