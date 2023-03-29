@@ -21,7 +21,7 @@ class WbPricesJob implements ShouldQueue
 
     public int $tries = 1;
 
-    public int $timeout = 300;
+    public int $timeout = 5400;
 
     public int $backoff = 10;
 

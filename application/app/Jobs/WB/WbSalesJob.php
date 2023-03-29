@@ -22,7 +22,7 @@ class WbSalesJob implements ShouldQueue
 
     public int $tries = 1;
 
-    public int $timeout = 600;
+    public int $timeout = 5400;
 
     public int $backoff = 10;
 
@@ -60,7 +60,7 @@ class WbSalesJob implements ShouldQueue
         static::$defaultDateFrom = Carbon::now()->subYears(3)->format('Y-m-d');
 
         $dateFrom = WbSale::query()->exists()
-            ? Carbon::parse(WbSale::query()->latest()->first()->date)->subDays(static::$countDaysLoading)
+            ? Carbon::parse(WbSale::query()->latest('last_change_date')->value('last_change_date'))->subDays(static::$countDaysLoading)
             : Carbon::parse(static::$defaultDateFrom);
 
         $salesResponse = $wbApi->getSupplierSales($dateFrom);

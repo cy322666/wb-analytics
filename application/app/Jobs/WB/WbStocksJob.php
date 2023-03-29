@@ -22,7 +22,7 @@ class WbStocksJob implements ShouldQueue
     public int $tries = 1;
 
     //длительность выполнения
-    public int $timeout = 300;
+    public int $timeout = 5400;
 
     //ожидание сек до повтора после фейла
     public int $backoff = 10;

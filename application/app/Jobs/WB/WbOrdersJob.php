@@ -27,7 +27,7 @@ class WbOrdersJob implements ShouldQueue, ShouldBeUnique
     public int $tries = 1;
 
     //длительность выполнения
-    public int $timeout = 600;
+    public int $timeout = 5400;
 
     //ожидание сек до повтора после фейла
     public int $backoff = 10;
@@ -58,7 +58,7 @@ class WbOrdersJob implements ShouldQueue, ShouldBeUnique
         static::$defaultDateFrom = Carbon::now()->subYears(3)->format('Y-m-d');
 
         $dateFrom = WbOrder::query()->exists()
-            ? Carbon::parse(WbOrder::query()->latest()->first()->last_change_date)->subDays(2)
+            ? Carbon::parse(WbOrder::query()->latest('last_change_date')->value('last_change_date'))->subDays(2)
             : Carbon::parse(static::$defaultDateFrom);
 
         $ordersResponse = $wbApi->getSupplierOrders($dateFrom);
