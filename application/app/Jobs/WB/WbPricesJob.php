@@ -21,7 +21,7 @@ class WbPricesJob implements ShouldQueue
 
     public int $tries = 1;
 
-    public int $timeout = 300;
+    public int $timeout = 5400;
 
     public int $backoff = 10;
 
@@ -72,8 +72,7 @@ class WbPricesJob implements ShouldQueue
             $prices
         );
 
-//        WbPrice::where([['account_id', $this->account->id], ['date', $today]])->delete();
-
+        WbPrice::where('date', $today)->delete();
         array_map(
             fn ($chunk) =>
                 WbPrice::query()->insert($chunk),

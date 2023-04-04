@@ -3,7 +3,6 @@
 namespace App\Jobs\WB;
 
 use App\Models\Account;
-use App\Models\WB\WbOrder;
 use App\Models\WB\WbSale;
 use App\Services\DB\Manager;
 use App\Services\WB\Wildberries;
@@ -14,9 +13,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Config;
-use KFilippovk\Wildberries\Exceptions\WildberriesException;
-use Throwable;
 
 class WbSalesJob implements ShouldQueue
 {
@@ -26,7 +22,7 @@ class WbSalesJob implements ShouldQueue
 
     public int $tries = 1;
 
-    public int $timeout = 1500;
+    public int $timeout = 5400;
 
     public int $backoff = 10;
 
@@ -63,8 +59,8 @@ class WbSalesJob implements ShouldQueue
 
         static::$defaultDateFrom = Carbon::now()->subYears(3)->format('Y-m-d');
 
-        $dateFrom = WbOrder::query()->exists()
-            ? Carbon::parse(WbOrder::query()->latest()->first()->date)->subDays(static::$countDaysLoading)
+        $dateFrom = WbSale::query()->exists()
+            ? Carbon::parse(WbSale::query()->latest('last_change_date')->value('last_change_date'))->subDays(static::$countDaysLoading)
             : Carbon::parse(static::$defaultDateFrom);
 
         $salesResponse = $wbApi->getSupplierSales($dateFrom);

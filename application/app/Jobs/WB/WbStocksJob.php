@@ -3,7 +3,6 @@
 namespace App\Jobs\WB;
 
 use App\Models\Account;
-use App\Models\WB\WbOrder;
 use App\Models\WB\WbStock;
 use App\Services\DB\Manager;
 use App\Services\WB\Wildberries;
@@ -23,7 +22,7 @@ class WbStocksJob implements ShouldQueue
     public int $tries = 1;
 
     //длительность выполнения
-    public int $timeout = 300;
+    public int $timeout = 5400;
 
     //ожидание сек до повтора после фейла
     public int $backoff = 10;
@@ -54,11 +53,9 @@ class WbStocksJob implements ShouldQueue
             'statistic' => $this->account->token_statistic,
         ]));
 
-        static::$defaultDateFrom = Carbon::now()->subYears(3)->format('Y-m-d');
+        static::$defaultDateFrom = Carbon::now()->subYears(3);
 
-        $dateFrom = WbStock::query()->exists()
-            ? Carbon::parse(WbStock::query()->latest()->first()->last_change_date)->subDays(7)
-            : Carbon::parse(static::$defaultDateFrom);
+        $dateFrom = Carbon::parse('2022-01-01');
 
         $stocksResponse = $wbApi->getSupplierStocks($dateFrom);
 
@@ -96,6 +93,7 @@ class WbStocksJob implements ShouldQueue
             $stocks
         );
 
+        WbStock::where([['date', $today], ['is_supplier_stock', false]])->delete();
         array_map(
             fn ($chunk) =>
                 WbStock::query()->insert($chunk),
