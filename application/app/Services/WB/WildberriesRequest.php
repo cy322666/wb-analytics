@@ -48,9 +48,15 @@ class WildberriesRequest
 
             return $this->httpClient->get($url, $options);
         }
-        catch (Throwable $exception) {
+        catch (Throwable $e) {
 
-            throw new Exception($exception);
+            Log::error(__METHOD__, [
+                'message' => $e->getMessage(). ' '.$e->getFile().' '.$e->getLine(),
+                'options' => $options,
+                'url'     => $url,
+            ]);
+
+            throw new Exception($e);
         }
     }
 
